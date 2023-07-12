@@ -15,15 +15,22 @@ use failure;
 // caixote
 use crate::{
     menu::title::TitleState,
-
-    window::Window
+    window::Window,
+    render::RenderErr
 };
 
 #[derive(Debug)]
 pub enum VoxygenErr {
     BackendErr(Box<any::Any>),
+    RenderErr(RenderErr),
 
     Other(failure::Error)
+}
+
+impl From<RenderErr> for VoxygenErr {
+    fn from(err: RenderErr) -> Self {
+        VoxygenErr::RenderErr(err)
+    }
 }
 
 // tipagem utilizada para armazenar o estado que é compartilhado entre os estados de play
