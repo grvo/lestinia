@@ -1,10 +1,7 @@
 // externo
-use gfx::handle::{RenderTargetView, DepthStencilView};
-use gfx_device_gl::{Device, Resources, Factory};
 use gfx_window_glutin;
 
 use glutin::{
-    self,
     Api::OpenGl,
     dpi::LogicalSize,
     ContextBuilder,
@@ -17,16 +14,8 @@ use glutin::{
     WindowBuilder
 };
 
-type TgtColorView = RenderTargetView<Resources, gfx::format::Srgba8>;
-type TgtDepthView = DepthStencilView<Resources, gfx::format::DepthStencil>;
-
-pub struct RenderCtx {
-    device: Device,
-    factory: Factory,
-
-    tgt_color_view: TgtColorView,
-    tgt_depth_view: TgtDepthView
-}
+// caixote
+use crate::render_ctx::RenderCtx;
 
 pub struct Window {
     events_loop: EventsLoop,
@@ -62,15 +51,18 @@ impl Window {
             events_loop,
             gl_window,
 
-            render_ctx: RenderCtx {
+            render_ctx: RenderCtx::new(
                 device,
                 factory,
 
                 tgt_color_view,
                 tgt_depth_view
-            }
+            )
         }
     }
+
+    pub fn render_ctx(&self) -> &RenderCtx { &self.render_ctx }
+    pub fn render_ctx_mut(&mut self) -> &mut RenderCtx { &mut self.render_ctx }
 
     pub fn poll_events<F: FnMut(Event)>(&mut self, mut f: F) {
         self.events_loop.poll_events(|event| match event {
