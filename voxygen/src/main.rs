@@ -1,4 +1,5 @@
 mod menu;
+mod render_ctx;
 mod window;
 
 // padrão
@@ -35,19 +36,21 @@ fn main() {
         window: Window::new(),
     };
 
-    loop {
-        match states.last_mut().map(|last| last.play(&mut global_state)) {
-            Some(StateResult::Close) => { states.pop(); },
-            
-            Some(StateResult::Push(new_state)) => { states.push(new_state); },
+    while let Some(state_result) = states.last_mut().map(|last| last.play(&mut global_state)) {
+        // implementar lógica de transferência de estado
 
-            Some(StateResult::Switch(mut new_state)) => if let Some(old_state) = states.last_mut() {
-                mem::swap(old_state, &mut new_state);
-            } else {
-                break;
+        match state_result {
+            StateResult::Close => {
+                states.pop();
+            },
+            
+            StateResult::Push(new_state) => {
+                states.push(new_state);
             },
 
-            None => break
+            StateResult::Switch(mut new_state) => {
+                states.last_mut().map(|old_state| mem::swap(old_state, &mut new_state));
+            }
         }
     }
 }
