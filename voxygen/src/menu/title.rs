@@ -4,7 +4,7 @@ use vek::*;
 // caixote
 use crate::{
     PlayState,
-    StateResult,
+    PlayStateResult,
     GlobalState,
     window::Event
 };
@@ -18,16 +18,17 @@ impl TitleState {
 }
 
 impl PlayState for TitleState {
-    fn play(&mut self, global_state: &mut GlobalState) -> StateResult {
-        let mut running = true;
-
-        while running {
-            global_state.window.poll_events(|event| match event {
-                Event::Close => running = false
-            });
+    fn play(&mut self, global_state: &mut GlobalState) -> PlayStateResult {
+        'eventloop: loop {
+            // processar eventos da janela
+            for event in global_state.window.fetch_events() {
+                match event {
+                    Event::Close => break 'eventloop PlayStateResult::Shutdown
+                }
+            }
 
             global_state.window
-                .render_ctx_mut()
+                .renderer_mut()
                 .clear(Rgba::new(
                     0.0,
                     0.3,
@@ -37,11 +38,11 @@ impl PlayState for TitleState {
                 ));
 
             global_state.window
-                .render_ctx_mut()
-                .flush_and_cleanup();
+                .renderer_mut()
+                .flush();
 
             global_state.window
-                .swap_buffers();
+                .display();
         }
 
         StateResult::Close
