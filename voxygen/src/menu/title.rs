@@ -1,3 +1,6 @@
+// biblioteca
+use vek::*;
+
 // caixote
 use crate::{
     PlayState,
@@ -23,7 +26,22 @@ impl PlayState for TitleState {
                 Event::Close => running = false
             });
 
-            global_state.window.swap_buffers();
+            global_state.window
+                .render_ctx_mut()
+                .clear(Rgba::new(
+                    0.0,
+                    0.3,
+
+                    1.0,
+                    1.0
+                ));
+
+            global_state.window
+                .render_ctx_mut()
+                .flush_and_cleanup();
+
+            global_state.window
+                .swap_buffers();
         }
 
         StateResult::Close
