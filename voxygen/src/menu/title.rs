@@ -42,9 +42,8 @@ impl PlayState for TitleState {
                 .flush();
 
             global_state.window
-                .display();
+                .display()
+                .expect("falha ao mostrar janela");
         }
-
-        StateResult::Close
     }
 }

@@ -3,10 +3,13 @@ mod render;
 mod window;
 
 // padrão
-use std::mem;
+use std::{
+    any,
+    mem
+};
 
 // biblioteca
-use winit;
+use glutin;
 use failure;
 
 // caixote
@@ -18,7 +21,7 @@ use crate::{
 
 #[derive(Debug)]
 pub enum VoxygenErr {
-    WinitCreationErr(winit::CreationErr),
+    BackendErr(Box<any::Any>),
 
     Other(failure::Error)
 }
