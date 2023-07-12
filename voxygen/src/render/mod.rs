@@ -1,32 +1,44 @@
+mod consts;
 mod mesh;
 mod model;
-mod renderer;
 mod pipelines;
-mod shader_set;
+mod renderer;
 
 // re-exportações
 pub use self::{
-    mesh::Mesh,
+    consts::Consts,
+    mesh::{Mesh, Quad},
     model::Model,
-
-    shader_set::ShaderSet,
 
     renderer::{
         Renderer,
 
         TgtColorFmt,
         TgtDepthFmt
+    },
+
+    pipelines::{
+        character::CharacterPipeline,
+        skybox::SkyboxPipeline
     }
 };
 
 #[cfg(feature = "gl")]
 use gfx_device_gl as gfx_backend;
 
+// biblioteca
+use gfx;
+
 /// utilizado para representar um dos vários possíveis erros que podem ser omitidos pelo código de renderização
 #[derive(Debug)]
-pub enum RenderErr {}
+pub enum RenderErr {
+    PipelineErr(gfx::PipelineStateError<String>),
+    UpdateErr(gfx::UpdateError<usize>)
+}
 
 /// utilizado para representar uma configuração de renderização específica
 pub trait Pipeline {
-    type Vertex;
+    type Vertex: Clone +
+        gfx::traits::Pod +
+        gfx::pso::buffer::Structure<gfx::format::Format>;
 }
