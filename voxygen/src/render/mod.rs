@@ -1,8 +1,8 @@
-mod consts;
-mod mesh;
-mod model;
-mod pipelines;
-mod renderer;
+pub mod consts;
+pub mod mesh;
+pub mod model;
+pub mod pipelines;
+pub mod renderer;
 
 // re-exportações
 pub use self::{
@@ -18,8 +18,19 @@ pub use self::{
     },
 
     pipelines::{
-        character::CharacterPipeline,
-        skybox::SkyboxPipeline
+        Globals,
+
+        character::{
+            CharacterPipeline,
+            Locals as CharacterLocals
+        },
+
+        skybox::{
+            create_mesh as create_skybox_mesh,
+
+            SkyboxPipeline,
+            Locals as SkyboxLocals
+        }
     }
 };
 
@@ -31,9 +42,9 @@ use gfx;
 
 /// utilizado para representar um dos vários possíveis erros que podem ser omitidos pelo código de renderização
 #[derive(Debug)]
-pub enum RenderErr {
-    PipelineErr(gfx::PipelineStateError<String>),
-    UpdateErr(gfx::UpdateError<usize>)
+pub enum RenderError {
+    PipelineError(gfx::PipelineStateError<String>),
+    UpdateError(gfx::UpdateError<usize>)
 }
 
 /// utilizado para representar uma configuração de renderização específica
