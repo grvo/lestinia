@@ -4,7 +4,7 @@ in vec3 v_pos;
 
 layout (std140)
 uniform u_locals {
-	mat4 model_mat;
+	vec4 nul;
 };
 
 layout (std140)
@@ -29,5 +29,7 @@ void main() {
 		proj_mat *
 		view_mat *
 
-		vec4(3000 * v_pos + cam_pos.xyz, 1);
+		vec4(v_pos + cam_pos.xyz, 1);
+
+	gl_Position.z = 0.0;
 }
