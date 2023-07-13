@@ -12,7 +12,7 @@ use super::{
     gfx_backend
 };
 
-// representa o mesh que foi enviado para a cpu
+// representa o mesh que foi enviado para a gpu
 pub struct Model<P: Pipeline> {
     pub vbuf: gfx::handle::Buffer<gfx_backend::Resources, P::Vertex>,
 
