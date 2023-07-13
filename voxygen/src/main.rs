@@ -1,37 +1,27 @@
-mod menu;
-mod render;
-mod window;
+pub mod error;
+pub mod menu;
+pub mod render;
+pub mod scene;
+pub mod session;
+pub mod window;
+
+// re-exportações
+pub use crate::error::Error;
 
 // padrão
-use std::{
-    any,
-    mem
-};
+use std::mem;
 
 // biblioteca
 use glutin;
 use failure;
+use log;
+use pretty_env_logger;
 
 // caixote
 use crate::{
     menu::title::TitleState,
-    window::Window,
-    render::RenderErr
+    window::Window
 };
-
-#[derive(Debug)]
-pub enum VoxygenErr {
-    BackendErr(Box<any::Any>),
-    RenderErr(RenderErr),
-
-    Other(failure::Error)
-}
-
-impl From<RenderErr> for VoxygenErr {
-    fn from(err: RenderErr) -> Self {
-        VoxygenErr::RenderErr(err)
-    }
-}
 
 // tipagem utilizada para armazenar o estado que é compartilhado entre os estados de play
 pub struct GlobalState {
@@ -43,8 +33,8 @@ pub enum PlayStateResult {
     /// abre todos os estados de jogo na ordem inversa e desliga o programa
     Shutdown,
 
-    /// fecha o estado play atual
-    Close,
+    /// fecha o estado play atual e poppa ele para o estado de play guardado
+    Pop,
 
     /// empurra um novo estado de reprodução para a pilha de estado de reprodução
     Push(Box<dyn PlayState>),
@@ -53,13 +43,27 @@ pub enum PlayStateResult {
     Switch(Box<dyn PlayState>)
 }
 
+/// característica que representa um estado de jogo jogável. pode ser um menu, uma sessão de jogo, o título, etc.
 pub trait PlayState {
+    /// joga o estado até que alguma mudança de estado seja necessária
     fn play(&mut self, global_state: &mut GlobalState) -> PlayStateResult;
+
+    /// obtém um nome descritivo para este tipo de estado
+    fn name(&self) -> &'static str;
 }
 
 fn main() {
+    // logging inicial
+    pretty_env_logger::init();
+
+    // configura o estado de play inicial
     let mut states: Vec<Box<dyn PlayState>> = vec![Box::new(TitleState::new())];
 
+    states.last().map(|current_state| {
+        log::info!("jogo iniciado com o estado '{}'", current_state.name())
+    });
+
+    // configura o estado global
     let mut global_state = GlobalState {
         window: Window::new()
             .expect("falha ao criar janela")
@@ -69,20 +73,34 @@ fn main() {
         // implementar lógica de transferência de estado
 
         match state_result {
-            PlayStateResult::Shutdown => while states.last().is_some() {
-                states.pop();
+            PlayStateResult::Shutdown => {
+                log::info!("desligando todos os estados...");
+
+                while states.last().is_some() {
+                    states.pop().map(|old_state| {
+                        log::info!("estado poppado '{}'", old_state.name())
+                    });
+                }
             },
 
-            PlayStateResult::Close => {
-                states.pop();
+            PlayStateResult::Pop => {
+                states.pop().map(|old_state| {
+                    log::info!("estado poppado '{}'", old_state.name())
+                });
             },
             
             PlayStateResult::Push(new_state) => {
+                log::info!("estado puxado '{}'", new_state.name());
+
                 states.push(new_state);
             },
 
             PlayStateResult::Switch(mut new_state) => {
-                states.last_mut().map(|old_state| mem::swap(old_state, &mut new_state));
+                states.last_mut().map(|old_state| {
+                    log::info!("alternando para o estado '{}' do estado '{}'", new_state.name(), old_state.name());
+
+                    mem::swap(old_state, &mut new_state);
+                });
             }
         }
     }
