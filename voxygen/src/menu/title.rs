@@ -7,7 +7,6 @@ use crate::{
     PlayStateResult,
     GlobalState,
     window::Event,
-    render,
     session::SessionState
 };
 
@@ -54,7 +53,7 @@ impl PlayState for TitleState {
 
             global_state.window
                 .display()
-                .expect("falha ao mostrar janela");
+                .expect("falha ao mostrar buffers de janela");
         }
     }
 
