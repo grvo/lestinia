@@ -4,6 +4,8 @@ pub mod model;
 pub mod pipelines;
 pub mod renderer;
 
+mod util;
+
 // re-exportações
 pub use self::{
     consts::Consts,
