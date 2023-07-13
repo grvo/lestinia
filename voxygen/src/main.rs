@@ -12,8 +12,6 @@ pub use crate::error::Error;
 use std::mem;
 
 // biblioteca
-use glutin;
-use failure;
 use log;
 use pretty_env_logger;
 
@@ -26,6 +24,12 @@ use crate::{
 // tipagem utilizada para armazenar o estado que é compartilhado entre os estados de play
 pub struct GlobalState {
     window: Window
+}
+
+impl GlobalState {
+    pub fn on_play_state_changed(&mut self) {
+        self.window.untrap_cursor();
+    }
 }
 
 // estados podem fechar (e reverter para próximo estado), puxar um novo estado no top deles mesmo, ou alterar para um estado totalmente diferente
@@ -78,14 +82,18 @@ fn main() {
 
                 while states.last().is_some() {
                     states.pop().map(|old_state| {
-                        log::info!("estado poppado '{}'", old_state.name())
+                        log::info!("estado poppado '{}'", old_state.name());
+
+                        global_state.on_play_state_changed();
                     });
                 }
             },
 
             PlayStateResult::Pop => {
                 states.pop().map(|old_state| {
-                    log::info!("estado poppado '{}'", old_state.name())
+                    log::info!("estado poppado '{}'", old_state.name());
+
+                    global_state.on_play_state_changed();
                 });
             },
             
@@ -93,6 +101,8 @@ fn main() {
                 log::info!("estado puxado '{}'", new_state.name());
 
                 states.push(new_state);
+
+                global_state.on_play_state_changed();
             },
 
             PlayStateResult::Switch(mut new_state) => {
@@ -100,6 +110,8 @@ fn main() {
                     log::info!("alternando para o estado '{}' do estado '{}'", new_state.name(), old_state.name());
 
                     mem::swap(old_state, &mut new_state);
+
+                    global_state.on_play_state_changed();
                 });
             }
         }
