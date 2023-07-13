@@ -4,7 +4,7 @@ use gfx_window_glutin;
 
 // caixote
 use crate::{
-    VoxygenErr,
+    Error,
 
     render::{
         Renderer,
@@ -21,7 +21,7 @@ pub struct Window {
 }
 
 impl Window {
-    pub fn new() -> Result<Window, VoxygenErr> {
+    pub fn new() -> Result<Window, Error> {
         let events_loop = glutin::EventsLoop::new();
 
         let win_builder = glutin::WindowBuilder::new()
@@ -45,7 +45,7 @@ impl Window {
             ctx_builder,
 
             &events_loop
-        ).map_err(|err| VoxygenErr::BackendErr(Box::new(err)))?;
+        ).map_err(|err| Error::BackendError(Box::new(err)))?;
 
         let tmp = Ok(Self {
             events_loop,
@@ -72,6 +72,7 @@ impl Window {
         self.events_loop.poll_events(|event| match event {
             glutin::Event::WindowEvent { event, .. } => match event {
                 glutin::WindowEvent::CloseRequested => events.push(Event::Close),
+                glutin::WindowEvent::ReceivedCharacter(c) => events.push(Event::Char(c)),
                 
                 _ => {}
             },
@@ -82,13 +83,15 @@ impl Window {
         events
     }
 
-    pub fn display(&self) -> Result<(), VoxygenErr> {
+    pub fn display(&self) -> Result<(), Error> {
         self.window
             .swap_buffers()
-            .map_err(|err| VoxygenErr::BackendErr(Box::new(err)))
+            .map_err(|err| Error::BackendError(Box::new(err)))
     }
 }
 
 pub enum Event {
-    Close
+    Close,
+
+    Char(char)
 }
