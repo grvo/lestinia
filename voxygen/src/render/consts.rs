@@ -7,29 +7,32 @@ use gfx::{
 
 // local
 use super::{
-    RenderErr,
+    RenderError,
 
     gfx_backend
 };
 
+/// um identificador para uma série de constantes na gpu. isso é usado para armazenar informações usadas em o processo de renderização que não muda em uma única passagem de renderização
 #[derive(Clone)]
 pub struct Consts<T: Copy + gfx::traits::Pod> {
     pub buf: gfx::handle::Buffer<gfx_backend::Resources, T>
 }
 
 impl<T: Copy + gfx::traits::Pod> Consts<T> {
+    /// criar um novo `const<t>`
     pub fn new(factory: &mut gfx_backend::Factory) -> Self {
         Self {
             buf: factory.create_constant_buffer(1)
         }
     }
 
+    /// atualiza o valor do lado da gpu representado por esse handle constante
     pub fn update(
         &mut self,
         encoder: &mut gfx::Encoder<gfx_backend::Resources, gfx_backend::CommandBuffer>,
-        data: T
-    ) -> Result<(), RenderErr> {
-        encoder.update_buffer(&self.buf, &[data], 0)
-            .map_err(|err| RenderErr::UpdateErr(err))
+        val: T
+    ) -> Result<(), RenderError> {
+        encoder.update_buffer(&self.buf, &[val], 0)
+            .map_err(|err| RenderError::UpdateError(err))
     }
 }
