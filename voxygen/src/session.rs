@@ -33,6 +33,9 @@ const BG_COLOR: Rgba<f32> = Rgba { r: 0.0, g: 0.3, b: 1.0, a: 1.0 };
 
 impl PlayState for SessionState {
     fn play(&mut self, global_state: &mut GlobalState) -> PlayStateResult {
+        // capturar cursor
+        global_state.window.trap_cursor();
+
         // loop de jogo
         loop {
             // auxiliar eventos de janela
@@ -47,6 +50,9 @@ impl PlayState for SessionState {
                     _ => {}
                 }
             }
+
+            // manter dados da cena da gpu
+            self.scene.maintain_gpu_data(global_state.window.renderer_mut());
 
             // limpar a tela
             global_state.window
@@ -64,7 +70,7 @@ impl PlayState for SessionState {
 
             global_state.window
                 .display()
-                .expect("falha ao mostrar a janela");
+                .expect("falha ao mostrar buffers da janela");
         }
     }
 
