@@ -22,15 +22,16 @@ impl Camera {
         Self {
             focus: Vec3::zero(),
             ori: Vec3::zero(),
-            dist: 10.0,
+
+            dist: 5.0,
             fov: 1.3,
-            aspect: 1.618,
+            aspect: 1.618
         }
     }
 
     /// computar matrizes de transformação para a câmera
-    pub fn compute_matrices(&self) -> (Mat4<f32>, Mat4<f32>) {
-        let view = Mat4::<f32>::identity()
+    pub fn compute_dependents(&self) -> (Mat4<f32>, Mat4<f32>, Vec3<f32>) {
+        let view_mat = Mat4::<f32>::identity()
             * Mat4::translation_3d(-Vec3::unit_z() * self.dist)
 
             * Mat4::rotation_z(self.ori.z)
@@ -40,7 +41,7 @@ impl Camera {
 
             * Mat4::translation_3d(-self.focus);
 
-        let proj = Mat4::perspective_rh_no(
+        let proj_mat = Mat4::perspective_rh_no(
             self.fov,
             self.aspect,
 
@@ -48,6 +49,15 @@ impl Camera {
             FAR_PLANE
         );
 
-        (view, proj)
+        // todo: fazer disso algo mais eficiente
+        let cam_pos = Vec3::from(view_mat.inverted() * Vec4::unit_w());
+
+        (view_mat, proj_mat, cam_pos)
     }
+
+    /// obter a posição de foco da câmera
+    pub fn get_focus_pos(&self) -> Vec3<f32> { self.focus }
+
+    /// determinar a posição de foco da câmera
+    pub fn set_focus_pos(&mut self, focus: Vec3<f32>) { self.focus = focus; }
 }
