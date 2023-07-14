@@ -1,15 +1,22 @@
 pub mod camera;
 
-// caixote
-use crate::render::{
-    Consts,
-    Globals,
-    Model,
-    Renderer,
-    SkyboxPipeline,
-    SkyboxLocals,
+// biblioteca
+use vek::*;
 
-    create_skybox_mesh
+// caixote
+use crate::{
+    render::{
+        Consts,
+        Globals,
+        Model,
+        Renderer,
+        SkyboxPipeline,
+        SkyboxLocals,
+
+        create_skybox_mesh
+    },
+
+    window::Event
 };
 
 // local
@@ -19,6 +26,9 @@ struct Skybox {
     model: Model<SkyboxPipeline>,
     locals: Consts<SkyboxLocals>
 }
+
+// todo: não forçar código disso
+const CURSOR_PAN_SCALE: f32 = 0.005;
 
 pub struct Scene {
     camera: Camera,
@@ -48,6 +58,22 @@ impl Scene {
         }
     }
 
+    /// auxilia um evento de input de usuário que está sendo recebido (exemplos: cursor movendo, tecla pressionada, janela fechada, etc.)
+    pub fn handle_input_event(&mut self, event: Event) -> bool {
+        match event {
+            // paralizar o cursor faz com que a câmera rotacione
+            Event::CursorPan(delta) => {
+                self.camera.rotate_by(Vec3::from(delta) * CURSOR_PAN_SCALE);
+
+                true
+            },
+
+            // todos os outros eventos não-auxiliados
+            _ => false
+        }
+    }
+
+    /// mantém e atualiza dados da gpu como buffers constantes, modelos, etc.
     pub fn maintain_gpu_data(&mut self, renderer: &mut Renderer) {
         // computar matrizes de câmera
         let (view_mat, proj_mat, cam_pos) = self.camera.compute_dependents();
