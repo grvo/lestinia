@@ -21,12 +21,13 @@ use crate::{
     window::Window
 };
 
-// tipagem utilizada para armazenar o estado que é compartilhado entre os estados de play
+/// tipagem utilizada para armazenar o estado que é compartilhado entre os estados de play
 pub struct GlobalState {
     window: Window
 }
 
 impl GlobalState {
+    /// chamado depois de alguma mudança no estado de jogar que ocorreu
     pub fn on_play_state_changed(&mut self) {
         self.window.untrap_cursor();
     }
