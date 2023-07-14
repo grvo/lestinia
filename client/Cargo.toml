@@ -5,6 +5,6 @@ authors = ["grivo <notgrivo@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-common = { path = "../common" }
+common = { package = "lestinia-common", path = "../common" }
 
 specs = "0.14"
