@@ -55,6 +55,16 @@ impl Camera {
         (view_mat, proj_mat, cam_pos)
     }
 
+    /// rotaciona a câmera por meio de foco por meio de delta recebido, limitando o input
+    pub fn rotate_by(&mut self, delta: Vec3<f32>) {
+        self.ori += delta;
+
+        // clamp da câmera para limites verticais
+        self.ori.y = self.ori.y
+            .min(PI / 2.0)
+            .max(-PI / 2.0);
+    }
+
     /// obter a posição de foco da câmera
     pub fn get_focus_pos(&self) -> Vec3<f32> { self.focus }
 
