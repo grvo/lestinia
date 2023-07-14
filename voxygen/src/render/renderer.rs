@@ -110,13 +110,25 @@ impl Renderer {
         Ok(Consts::new(&mut self.factory))
     }
 
-    /// cria uma nova variedade de constantes e atualiza elas com um valor
-    pub fn create_consts_with<T: Copy + gfx::traits::Pod>(&mut self, val: T) -> Result<Consts<T>, RenderError> {
+    /// cria uma nova variedade de constantes com um valor
+    pub fn create_consts_with<T: Copy + gfx::traits::Pod>(
+        &mut self,
+        val: T
+    ) -> Result<Consts<T>, RenderError> {
         let mut consts = self.create_consts()?;
 
         consts.update(&mut self.encoder, val)?;
 
         Ok(consts)
+    }
+
+    /// atualiza o conjunto de constantes com novo valor
+    pub fn update_consts<T: Copy + gfx::traits::Pod>(
+        &mut self,
+        consts: &mut Consts<T>,
+        val: T
+    ) -> Result<(), RenderError> {
+        consts.update(&mut self.encoder, val)
     }
 
     /// criar novo modelo por meio do mesh fornecido
@@ -154,8 +166,6 @@ impl Renderer {
 }
 
 struct GfxPipeline<P: gfx::pso::PipelineInit> {
-    program: gfx::handle::Program<gfx_backend::Resources>,
-
     pso: gfx::pso::PipelineState<gfx_backend::Resources, P::Meta>
 }
 
@@ -191,10 +201,14 @@ fn create_pipeline<'a, P: gfx::pso::PipelineInit>(
                 pipe
             )
                 .map_err(|err| RenderError::PipelineError(match err {
-                    gfx::PipelineStateError::Program(err) => gfx::PipelineStateError::Program(err),
-                    gfx::PipelineStateError::DescriptorInit(err) => gfx::PipelineStateError::DescriptorInit(err.into()),
-                    gfx::PipelineStateError::DeviceCreate(err) => gfx::PipelineStateError::DeviceCreate(err)
+                    gfx::PipelineStateError::Program(err) =>
+                        gfx::PipelineStateError::Program(err),
+
+                    gfx::PipelineStateError::DescriptorInit(err) =>
+                        gfx::PipelineStateError::DescriptorInit(err.into()),
+
+                    gfx::PipelineStateError::DeviceCreate(err) =>
+                        gfx::PipelineStateError::DeviceCreate(err)
                 }))?
-        program
     })
 }
