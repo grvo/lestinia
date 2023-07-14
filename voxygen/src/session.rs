@@ -40,15 +40,15 @@ impl PlayState for SessionState {
         loop {
             // auxiliar eventos de janela
             for event in global_state.window.fetch_events() {
-                match event {
+                let _handled = match event {
                     Event::Close => return PlayStateResult::Shutdown,
 
                     // quando 'q' for pressionado, deixar sessão
                     Event::Char('q') => return PlayStateResult::Pop,
 
-                    // ignorar todos os outros eventos
-                    _ => {}
-                }
+                    // passar todos os outros eventos para a cena
+                    event => self.scene.handle_input_event(event)
+                };
             }
 
             // manter dados da cena da gpu
