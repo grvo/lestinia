@@ -42,14 +42,22 @@ use gfx_device_gl as gfx_backend;
 // biblioteca
 use gfx;
 
-/// utilizado para representar um dos vários possíveis erros que podem ser omitidos pelo código de renderização
+/// utilizado para representar um dos diversos erros possíveis que podem ser omitidos pelo sub-sistema de renderização
 #[derive(Debug)]
 pub enum RenderError {
     PipelineError(gfx::PipelineStateError<String>),
     UpdateError(gfx::UpdateError<usize>)
 }
 
-/// utilizado para representar uma configuração de renderização específica
+/// utilizado para representar um dos vários possíveis erros que podem ser omitidos pelo sub-sistema de renderização
+///
+/// nota que as pipelines estão para renderizar o backend
+/// e é necessário modificar a renderização de sub-sistema ao adicionar novas pipelines
+///
+/// # exemplos
+///
+/// - `SkyboxPipeline`
+/// - `CharacterPipeline`
 pub trait Pipeline {
     type Vertex: Clone +
         gfx::traits::Pod +
