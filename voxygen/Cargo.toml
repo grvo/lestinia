@@ -10,7 +10,8 @@ gl = ["gfx_device_gl"]
 default = []
 
 [dependencies]
-common = { path = "../common" }
+common = { package = "lestinia-common", path = "../common" }
+client = { package = "lestinia-client", path = "../client" }
 
 # gráficos
 gfx = "0.17"
