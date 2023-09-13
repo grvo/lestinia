@@ -1,5 +1,11 @@
+// padrão
+use std::time::Duration;
+
 // biblioteca
 use vek::*;
+
+// projeto
+use common::clock::Clock;
 
 // caixote
 use crate::{
@@ -12,6 +18,8 @@ use crate::{
     render::Renderer,
     scene::Scene
 };
+
+const FPS: u64 = 60;
 
 pub struct SessionState {
     scene: Scene
@@ -31,10 +39,32 @@ impl SessionState {
 // cor do fundo
 const BG_COLOR: Rgba<f32> = Rgba { r: 0.0, g: 0.3, b: 1.0, a: 1.0 };
 
+impl SessionState {
+    /// renderizar a sessão para a tela
+    ///
+    /// esse método deve ser chamado uma vez por frame
+    pub fn render(&mut self, renderer: &mut Renderer) {
+        // manter dado de gpu da cena
+        self.scene.maintain_gpu_data(renderer);
+
+        // limpar a tela
+        renderer.clear(BG_COLOR);
+
+        // renderizar a tela utilizando renderizador global
+        self.scene.render_to(renderer);
+
+        // finalizar o frame
+        renderer.flush();
+    }
+}
+
 impl PlayState for SessionState {
     fn play(&mut self, global_state: &mut GlobalState) -> PlayStateResult {
         // capturar cursor
         global_state.window.trap_cursor();
+
+        // configurar clock de fps
+        let mut clock = Clock::new();
 
         // loop de jogo
         loop {
@@ -49,28 +79,24 @@ impl PlayState for SessionState {
                     // passar todos os outros eventos para a cena
                     event => self.scene.handle_input_event(event)
                 };
+
+                // TODO: fazer algo se o evento não for auxiliado?
             }
 
-            // manter dados da cena da gpu
-            self.scene.maintain_gpu_data(global_state.window.renderer_mut());
+            // performar um tick em jogo
+            self.scene.tick(clock.get_last_delta())
+                .expect("falha ao tickar a cena");
 
-            // limpar a tela
+            // renderizar a sessão
+            self.render(global_state.window.renderer_mut());
+
+            // mostrar o frame na janela
             global_state.window
-                .renderer_mut()
-                .clear(BG_COLOR);
+                .swap_buffers()
+                .expect("falha ao trocar buffers de janela");
 
-            // renderizar a tela utilizando renderizador global
-            self.scene
-                .render_to(global_state.window.renderer_mut());
-
-            // finalizar frame
-            global_state.window
-                .renderer_mut()
-                .flush();
-
-            global_state.window
-                .display()
-                .expect("falha ao mostrar buffers da janela");
+            // esperar para o próximo tick
+            clock.tick(Duration::from_millis(1000 / FPS));
         }
     }
 
