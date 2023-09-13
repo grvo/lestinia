@@ -4,9 +4,8 @@ use std::time::Duration;
 // interno
 use common::state::State;
 
-pub enum ClientErr {
-    ServerShutdown,
-
+#[derive(Debug)]
+pub enum Error {
     Other(String)
 }
 
@@ -21,14 +20,21 @@ pub struct Server {
 }
 
 impl Server {
+    /// cria um novo servidor
     pub fn new() -> Self {
         Self {
             state: State::new()
         }
     }
 
+    /// obtém uma referência do estado do jogo do cliente
+    pub fn state(&self) -> &State { &self.state }
+
+    /// obtém uma referência mutável do estado do jogo do cliente
+    pub fn state_mut(&mut self) -> &mut State { &mut self.state }
+
     /// executar tick de cliente único, ajudar input e atualizar estado do jogo pela duração recebida
-    pub fn tick(&mut self, input: Input, dt: Duration) -> Result<(), ClientErr> {
+    pub fn tick(&mut self, input: Input, dt: Duration) -> Result<(), Error> {
         // a função tick é o centro do universo lestinia
         // a maior parte das coisas pela parte do client são gerenciadas aqui
         //
