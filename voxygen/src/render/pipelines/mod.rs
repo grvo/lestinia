@@ -23,9 +23,10 @@ gfx_defines! {
 
         cam_pos: [f32; 4] = "cam_pos",
         focus_pos: [f32; 4] = "focus_pos",
+        // TODO: corrigir qualquer erro de alinhamento necessita desses uniformes para serem alinhados
         
         view_distance: [f32; 4] = "view_distance",
-        time_of_day: [f32; 4] = "time_of_day",
+        time_of_day: [f32; 4] = "time_of_day", // TODO: fazer disso um f64
         time: [f32; 4] = "time"
     }
 }
@@ -66,7 +67,7 @@ impl Globals {
             focus_pos: Vec4::from(focus_pos).into_array(),
 
             view_distance: [view_distance; 4],
-            time_of_day: [time_of_day; 4],
+            time_of_day: [time_of_day as f32; 4],
             time: [time; 4]
         }
     }
