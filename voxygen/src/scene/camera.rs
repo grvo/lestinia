@@ -20,10 +20,10 @@ impl Camera {
     /// criar um novo `camera` com parâmetros padrões
     pub fn new() -> Self {
         Self {
-            focus: Vec3::zero(),
+            focus: Vec3::unit_z() * 10.0,
             ori: Vec3::zero(),
 
-            dist: 5.0,
+            dist: 40.0,
             fov: 1.3,
             aspect: 1.618
         }
