@@ -1,10 +1,21 @@
 pub mod camera;
 
+// padrão
+use std::time::Duration;
+
 // biblioteca
 use vek::*;
 
+// projeto
+use client::{
+    self,
+    Client
+};
+
 // caixote
 use crate::{
+    Error,
+    
     render::{
         Consts,
         Globals,
@@ -33,7 +44,8 @@ const CURSOR_PAN_SCALE: f32 = 0.005;
 pub struct Scene {
     camera: Camera,
     globals: Consts<Globals>,
-    skybox: Skybox
+    skybox: Skybox,
+    client: Client
 }
 
 impl Scene {
@@ -54,8 +66,17 @@ impl Scene {
                 locals: renderer
                     .create_consts_with(SkyboxLocals::default())
                     .unwrap()
-            }
+            },
+
+            client: Client::new()
         }
+    }
+
+    /// ticka a cena (e o client anexado nela)
+    pub fn tick(&mut self, dt: Duration) -> Result<(), Error> {
+        self.client.tick(client::Input {}, dt)?;
+
+        Ok(())
     }
 
     /// auxilia um evento de input de usuário que está sendo recebido (exemplos: cursor movendo, tecla pressionada, janela fechada, etc.)
@@ -87,7 +108,7 @@ impl Scene {
             self.camera.get_focus_pos(),
 
             10.0,
-            0.0,
+            self.client.state().get_time_of_day(),
             0.0
         ))
             .expect("falha ao atualizar constantes globais");
