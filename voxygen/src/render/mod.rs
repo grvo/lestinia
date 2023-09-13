@@ -9,7 +9,7 @@ mod util;
 // re-exportações
 pub use self::{
     consts::Consts,
-    mesh::{Mesh, Quad},
+    mesh::{Mesh, Tri, Quad},
     model::Model,
 
     renderer::{
@@ -22,9 +22,10 @@ pub use self::{
     pipelines::{
         Globals,
 
-        character::{
-            CharacterPipeline,
-            Locals as CharacterLocals
+        figure::{
+            FigurePipeline,
+            Locals as FigureLocals,
+            BoneData as FigureBoneData
         },
 
         skybox::{
@@ -57,7 +58,7 @@ pub enum RenderError {
 /// # exemplos
 ///
 /// - `SkyboxPipeline`
-/// - `CharacterPipeline`
+/// - `FigurePipeline`
 pub trait Pipeline {
     type Vertex: Clone +
         gfx::traits::Pod +
