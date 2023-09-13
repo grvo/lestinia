@@ -8,8 +8,7 @@ use specs::World as EcsWorld;
 use Crate::{
     comp,
 
-    terrain::TerrainMap,
-    vol::VolSize
+    terrain::TerrainMap
 };
 
 /// o quão rápido deve um dia do jogo ser comparado a um dia real
