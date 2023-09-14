@@ -31,16 +31,17 @@ fn create_quad(
     origin: Vec3<f32>,
     unit_x: Vec3<f32>,
     unit_y: Vec3<f32>,
+    norm: Vec3<f32>,
     
     col: Rgb<f32>,
     bone: u8
 ) -> Quad<FigurePipeline> {
     Quad::new(
-        FigureVertex::new(origin, col, bone),
+        FigureVertex::new(origin, norm, col, bone),
 
-        FigureVertex::new(origin + unit_x, col, bone),
-        FigureVertex::new(origin + unit_x + unit_y, col, bone),
-        FigureVertex::new(origin + unit_y, col, bone)
+        FigureVertex::new(origin + unit_x, norm, col, bone),
+        FigureVertex::new(origin + unit_x + unit_y, norm, col, bone),
+        FigureVertex::new(origin + unit_y, norm, col, bone)
     )
 }
 
@@ -65,6 +66,7 @@ impl Meshable for Segment {
                     offs + pos.map(|e| e as f32) + Vec3::unit_y(),
                     -Vec3::unit_y(),
                     Vec3::unit_z(),
+                    -Vec3::unit_x(),
                     col,
                     0
                 ));
@@ -74,6 +76,7 @@ impl Meshable for Segment {
                     offs + pos.map(|e| e as f32) + Vec3::unit_x(),
                     Vec3::unit_y(),
                     Vec3::unit_z(),
+                    Vec3::unit_x(),
                     col,
                     0
                 ));
@@ -83,6 +86,7 @@ impl Meshable for Segment {
                     offs + pos.map(|e| e as f32),
                     Vec3::unit_x(),
                     Vec3::unit_z(),
+                    -Vec3::unit_y(),
                     col,
                     0
                 ));
@@ -92,6 +96,7 @@ impl Meshable for Segment {
                     offs + pos.map(|e| e as f32) + Vec3::unit_y(),
                     Vec3::unit_z(),
                     Vec3::unit_x(),
+                    Vec3::unit_y(),
                     col,
                     0
                 ));
@@ -101,6 +106,7 @@ impl Meshable for Segment {
                     offs + pos.map(|e| e as f32),
                     Vec3::unit_y(),
                     Vec3::unit_x(),
+                    -Vec3::unit_z(),
                     col,
                     0
                 ));
@@ -110,6 +116,7 @@ impl Meshable for Segment {
                     offs + pos.map(|e| e as f32) + Vec3::unit_z(),
                     Vec3::unit_x(),
                     Vec3::unit_y(),
+                    Vec3::unit_z(),
                     col,
                     0
                 ));
