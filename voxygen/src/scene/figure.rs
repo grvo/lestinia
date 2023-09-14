@@ -17,7 +17,7 @@ use crate::{
     anim::Skeleton
 };
 
-pub struct Figure {
+pub struct Figure<S: Skeleton> {
     // dados de gpu
     model: Model<FigurePipeline>,
     bone_consts: Consts<FigureBoneData>,
@@ -26,16 +26,15 @@ pub struct Figure {
     // dados de cpu
     bone_mashes: [Option<Mesh<FigurePipeline>>; 16],
 
-    pub skeleton: Skeleton
+    pub skeleton: S
 }
 
-impl Figure {
+impl<S: Skeleton> Figure<S> {
     pub fn new(
         renderer: &mut Renderer,
-        bone_mashes: [Option<Mesh<FigurePipeline>>; 16]
-    ) -> Result<Self, Error> {
-        let skeleton = Skeleton::default();
-
+        bone_mashes: [Option<Mesh<FigurePipeline>>; 16],
+        skeleton: S
+    ) -> Result<Self, Error> 
         let mut this = Self {
             model: renderer.create_model(&Mesh::new())?,
             bone_consts: renderer.create_consts(&skeleton.compute_matrices())?,
