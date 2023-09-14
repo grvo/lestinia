@@ -1,16 +1,20 @@
 pub mod camera;
+pub mod figure;
 
 // padrão
 use std::time::Duration;
 
 // biblioteca
 use vek::*;
+use dot_vox;
 
 // projeto
 use client::{
     self,
     Client
 };
+
+use common::figure::Segment;
 
 // caixote
 use crate::{
@@ -23,29 +27,42 @@ use crate::{
         Renderer,
         SkyboxPipeline,
         SkyboxLocals,
+        FigureLocals,
 
         create_skybox_mesh
     },
 
-    window::Event
+    window::Event,
+    mesh::Meshable
 };
 
 // local
-use self::camera::Camera;
+use self::{
+    camera::Camera,
+    figure::Figure
+};
+
+// TODO: não dificultar esse código
+const CURSOR_PAN_SCALE: f32 = 0.005;
 
 struct Skybox {
     model: Model<SkyboxPipeline>,
     locals: Consts<SkyboxLocals>
 }
 
-// todo: não forçar código disso
-const CURSOR_PAN_SCALE: f32 = 0.005;
-
 pub struct Scene {
     camera: Camera,
     globals: Consts<Globals>,
     skybox: Skybox,
+
+    test_figure: Figure,
+    
     client: Client
+}
+
+// TODO: fazer um asset proper para carregar o sistema
+fn load_segment(filename: &'static str) -> Segment {
+    Segment::from(dot_vox::load(&(concat!(env!("CARGO_MANIFEST_DIR"), "/test_assets/").to_string() + filename)).unwrap())
 }
 
 impl Scene {
@@ -55,7 +72,7 @@ impl Scene {
             camera: Camera::new(),
 
             globals: renderer
-                .create_consts_with(Globals::default())
+                .create_consts(&[Globals::default()])
                 .unwrap(),
 
             skybox: Skybox {
@@ -64,9 +81,32 @@ impl Scene {
                     .unwrap(),
 
                 locals: renderer
-                    .create_consts_with(SkyboxLocals::default())
+                    .create_consts(&[SkyboxLocals::default()])
                     .unwrap()
             },
+
+            test_figure: Figure::new(
+                renderer, [
+                    Some(load_segment("head.vox").generate_mesh_with_offset(Vec3::new(-7.0, -5.5, -1.0))),
+                    Some(load_segment("chest.vox").generate_mesh_with_offset(Vec3::new(-6.0, -3.0, 0.0))),
+                    Some(load_segment("belt.vox").generate_mesh_with_offset(Vec3::new(-5.0, -3.0, 0.0))),
+                    Some(load_segment("pants.vox").generate_mesh_with_offset(Vec3::new(-5.0, -3.0, 0.0))),
+                    Some(load_segment("foot.vox").generate_mesh_with_offset(Vec3::new(-2.5, -3.0, 0.0))),
+                    Some(load_segment("foot.vox").generate_mesh_with_offset(Vec3::new(-2.5, -3.0, 0.0))),
+                    Some(load_segment("hand.vox").generate_mesh_with_offset(Vec3::new(-2.0, -2.0, -1.0))),
+                    Some(load_segment("hand.vox").generate_mesh_with_offset(Vec3::new(-2.0, -2.0, -1.0))),
+                    Some(load_segment("sword.vox").generate_mesh_with_offset(Vec3::new(-6.5, -1.0, 0.0))),
+
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None
+                ]
+            )
+                .unwrap(),
 
             client: Client::new()
         }
@@ -100,7 +140,7 @@ impl Scene {
         let (view_mat, proj_mat, cam_pos) = self.camera.compute_dependents();
 
         // atualizar constantes globais
-        renderer.update_consts(&mut self.globals, Globals::new(
+        renderer.update_consts(&mut self.globals, &[Globals::new(
             view_mat,
             proj_mat,
             cam_pos,
@@ -110,8 +150,38 @@ impl Scene {
             10.0,
             self.client.state().get_time_of_day(),
             0.0
-        ))
+        )])
             .expect("falha ao atualizar constantes globais");
+
+        // TODO: não fazer isso aqui
+        let offs = (self.client.state().get_tick() as f32 * 10.0).sin();
+
+        self.test_figure.skeleton.bone_mut(0).offset = Vec3::new(0.0, 0.0, 13.0);
+        self.test_figure.skeleton.bone_mut(0).ori = Quaternion::rotation_z(offs * 0.3);
+
+        // caixote
+        self.test_figure.skeleton.bone_mut(1).offset = Vec3::new(0.0, 0.0, 9.0);
+        self.test_figure.skeleton.bone_mut(2).offset = Vec3::new(0.0, 0.0, 7.0);
+        self.test_figure.skeleton.bone_mut(3).offset = Vec3::new(0.0, 0.0, 4.0);
+
+        self.test_figure.skeleton.bone_mut(1).ori = Quaternion::rotation_z(offs * 0.15);
+        self.test_figure.skeleton.bone_mut(2).ori = Quaternion::rotation_z(offs * 0.15);
+        self.test_figure.skeleton.bone_mut(3).ori = Quaternion::rotation_z(offs * 0.15);
+
+        // pés
+        self.test_figure.skeleton.bone_mut(4).offset = Vec3::new(-3.0, -offs * 4.0, 0.0);
+        self.test_figure.skeleton.bone_mut(5).offset = Vec3::new(3.0, offs * 4.0, 0.0);
+
+        // mãos
+        self.test_figure.skeleton.bone_mut(6).offset = Vec3::new(-8.0, offs * 4.0, 9.0);
+        self.test_figure.skeleton.bone_mut(7).offset = Vec3::new(8.0, -offs * 4.0, 9.0);
+
+        // espada
+        self.test_figure.skeleton.bone_mut(8).offset = Vec3::new(-8.0, 5.0, 24.0);
+        self.test_figure.skeleton.bone_mut(8).ori = Quaternion::rotation_y(2.5);
+
+        self.test_figure.update_locals(renderer, FigureLocals::default());
+        self.test_figure.update_skeleton(renderer);
     }
 
     /// renderizar cena usando o `renderer` fornecido
@@ -120,8 +190,11 @@ impl Scene {
         
         renderer.render_skybox(
             &self.skybox.model,
-            &self.skybox.locals,
-            &self.globals
+            &self.globals,
+            &self.skybox.locals
         );
+
+        // renderizar o teste de figura
+        self.test_figure.render(renderer, &self.globals);
     }
 }
