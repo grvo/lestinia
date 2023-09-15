@@ -24,7 +24,8 @@ use super::{
     pipelines::{
         Globals,
         figure,
-        skybox
+        skybox,
+        terrain
     }
 };
 
@@ -51,7 +52,8 @@ pub struct Renderer {
     tgt_depth_view: TgtDepthView,
 
     skybox_pipeline: GfxPipeline<skybox::pipe::Init<'static>>,
-    figure_pipeline: GfxPipeline<figure::pipe::Init<'static>>
+    figure_pipeline: GfxPipeline<figure::pipe::Init<'static>>,
+    terrain_pipeline: GfxPipeline<terrain::pipe::Init<'static>>
 }
 
 impl Renderer {
@@ -63,7 +65,7 @@ impl Renderer {
         tgt_color_view: TgtColorView,
         tgt_depth_view: TgtDepthView
     ) -> Result<Self, RenderError> {
-        // constrói uma pipeline para renderizar skyboxes
+        // constrói uma pipeline para renderização de skyboxes
         let skybox_pipeline = create_pipeline(
             &mut factory,
             skybox::pipe::new(),
@@ -72,13 +74,22 @@ impl Renderer {
             include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/skybox.frag"))
         )?;
 
-        // constrói uma pipeline para renderizar skyboxes
+        // constrói uma pipeline para renderização de skyboxes
         let figure_pipeline = create_pipeline(
             &mut factory,
             figure::pipe::new(),
 
             include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/figure.vert")),
             include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/figure.frag"))
+        )?;
+
+        // constrói uma pipeline para renderização de terrenos
+        let terrain_pipeline = create_pipeline(
+            &mut factory,
+            terrain::pipe::new(),
+
+            include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/terrain.vert")),
+            include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/terrain.frag"))
         )?;
 
         Ok(Self {
@@ -90,7 +101,8 @@ impl Renderer {
             tgt_depth_view,
 
             skybox_pipeline,
-            figure_pipeline
+            figure_pipeline,
+            terrain_pipeline
         })
     }
 
@@ -180,6 +192,29 @@ impl Renderer {
                 globals: globals.buf.clone(),
 
                 bones: bones.buf.clone(),
+
+                tgt_color: self.tgt_color_view.clone(),
+                tgt_depth: self.tgt_depth_view.clone()
+            }
+        );
+    }
+
+    /// lista a renderização do chunk de terreno fornecido
+    pub fn render_terrain_chunk(
+        &mut self,
+        
+        model: &Model<terrain::TerrainPipeline>,
+        globals: &Consts<Globals>,
+        locals: &Consts<terrain::Locals>
+    ) {
+        self.encoder.draw(
+            &model.slice,
+            &self.terrain_pipeline.pso,
+
+            &terrain::pipe::Data {
+                vbuf: model.vbuf.clone(),
+                locals: locals.buf.clone(),
+                globals: globals.buf.clone(),
 
                 tgt_color: self.tgt_color_view.clone(),
                 tgt_depth: self.tgt_depth_view.clone()
