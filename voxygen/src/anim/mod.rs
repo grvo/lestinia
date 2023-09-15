@@ -8,8 +8,6 @@ use crate::render::FigureBoneData;
 
 #[derive(Copy, Clone)]
 pub struct Bone {
-    parent_idx: Option<u8>, // deve ser menos que o index de bone atual
-
     pub offset: Vec3<f32>,
     pub ori: Quaternion<f32>
 }
@@ -17,18 +15,9 @@ pub struct Bone {
 impl Bone {
     pub fn default() -> Self {
         Self {
-            parent_idx: None,
             offset: Vec3::zero(),
             ori: Quaternion::identity()
         }
-    }
-
-    pub fn get_parent_idx(&self) -> Option<u8> {
-        self.parent_idx
-    }
-
-    pub fn set_parent_idx(&mut self, parent_idx: u8) {
-        self.parent_idx = Some(parent_idx);
     }
 
     pub fn compute_base_matrix(&self) -> Mat4<f32> {
