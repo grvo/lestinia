@@ -27,7 +27,7 @@ gfx_defines! {
         
         view_distance: [f32; 4] = "view_distance",
         time_of_day: [f32; 4] = "time_of_day", // TODO: fazer disso um f64
-        time: [f32; 4] = "time"
+        tick: [f32; 4] = "tick"
     }
 }
 
@@ -43,7 +43,7 @@ impl Globals {
             
             view_distance: [0.0; 4],
             time_of_day: [0.0; 4],
-            time: [0.0; 4]
+            tick: [0.0; 4]
         }
     }
 
@@ -57,7 +57,7 @@ impl Globals {
 
         view_distance: f32,
         time_of_day: f32,
-        time: f32
+        tick: f64
     ) -> Self {
         Self {
             view_mat: arr_to_mat(view_mat.into_col_array()),
@@ -68,7 +68,7 @@ impl Globals {
 
             view_distance: [view_distance; 4],
             time_of_day: [time_of_day as f32; 4],
-            time: [time; 4]
+            tick: [tick as f32; 4]
         }
     }
 }
