@@ -1,25 +1,16 @@
 pub mod camera;
 pub mod figure;
 
-// padrão
-use std::time::Duration;
-
 // biblioteca
 use vek::*;
 use dot_vox;
 
 // projeto
-use client::{
-    self,
-    Client
-};
-
 use common::figure::Segment;
+use client::Client;
 
 // caixote
 use crate::{
-    Error,
-    
     render::{
         Consts,
         Globals,
@@ -64,9 +55,7 @@ pub struct Scene {
     globals: Consts<Globals>,
     skybox: Skybox,
 
-    test_figure: Figure<CharacterSkeleton>,
-    
-    client: Client
+    test_figure: Figure<CharacterSkeleton>
 }
 
 // TODO: fazer um asset proper para carregar o sistema
@@ -117,17 +106,8 @@ impl Scene {
 
                 CharacterSkeleton::new()
             )
-                .unwrap(),
-
-            client: Client::new()
+                .unwrap()
         }
-    }
-
-    /// ticka a cena (e o client anexado nela)
-    pub fn tick(&mut self, dt: Duration) -> Result<(), Error> {
-        self.client.tick(client::Input {}, dt)?;
-
-        Ok(())
     }
 
     /// auxilia um evento de input de usuário que está sendo recebido (exemplos: cursor movendo, tecla pressionada, janela fechada, etc.)
@@ -146,7 +126,7 @@ impl Scene {
     }
 
     /// mantém e atualiza dados da gpu como buffers constantes, modelos, etc.
-    pub fn maintain_gpu_data(&mut self, renderer: &mut Renderer) {
+    pub fn maintain_gpu_data(&mut self, renderer: &mut Renderer, client: &Client) {
         // computar matrizes de câmera
         let (view_mat, proj_mat, cam_pos) = self.camera.compute_dependents();
 
@@ -159,8 +139,9 @@ impl Scene {
             self.camera.get_focus_pos(),
 
             10.0,
-            self.client.state().get_time_of_day(),
-            0.0
+            
+            client.state().get_time_of_day(),
+            client.state().get_tick()
         )])
             .expect("falha ao atualizar constantes globais");
 
@@ -168,7 +149,7 @@ impl Scene {
         RunAnimation::update_skeleton(
             &mut self.test_figure.skeleton,
 
-            self.client.stare().get_tick()
+            client.stare().get_tick()
         );
 
         self.test_figure.update_locals(renderer, FigureLocals::default()).unwrap();
