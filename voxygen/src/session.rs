@@ -7,8 +7,16 @@ use vek::*;
 // projeto
 use common::clock::Clock;
 
+use client::{
+    self,
+    
+    Client
+};
+
 // caixote
 use crate::{
+    Error,
+    
     PlayState,
     PlayStateResult,
 
@@ -22,16 +30,18 @@ use crate::{
 const FPS: u64 = 60;
 
 pub struct SessionState {
-    scene: Scene
+    scene: Scene,
+    client: Client
 }
 
 /// representa uma atividade de sessão de jogo
 impl SessionState {
     /// cria um novo `sessionstate`
-    pub fn from_renderer(renderer: &mut Renderer) -> Self {
+    pub fn new(renderer: &mut Renderer) -> Self {
         Self {
             // cria uma cena para esta sessão
-            scene: Scene::new(renderer)
+            scene: Scene::new(renderer),
+            client: Client::new()
         }
     }
 }
@@ -40,12 +50,19 @@ impl SessionState {
 const BG_COLOR: Rgba<f32> = Rgba { r: 0.0, g: 0.3, b: 1.0, a: 1.0 };
 
 impl SessionState {
+    /// ticka a sessão (e o client anexado nela)
+    pub fn tick(&mut self, dt: Duration) -> Result<(), Error> {
+        self.client.tick(client::Input {}, dt)?;
+
+        Ok(())
+    }
+    
     /// renderizar a sessão para a tela
     ///
     /// esse método deve ser chamado uma vez por frame
     pub fn render(&mut self, renderer: &mut Renderer) {
         // manter dado de gpu da cena
-        self.scene.maintain_gpu_data(renderer);
+        self.scene.maintain_gpu_data(renderer, &self.client);
 
         // limpar a tela
         renderer.clear(BG_COLOR);
@@ -84,7 +101,7 @@ impl PlayState for SessionState {
             }
 
             // performar um tick em jogo
-            self.scene.tick(clock.get_last_delta())
+            self.tick(clock.get_last_delta())
                 .expect("falha ao tickar a cena");
 
             // renderizar a sessão
