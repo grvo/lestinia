@@ -33,6 +33,11 @@ pub use self::{
 
             SkyboxPipeline,
             Locals as SkyboxLocals
+        },
+
+        terrain::{
+            TerrainPipeline,
+            Locals as TerrainLocals
         }
     }
 };
