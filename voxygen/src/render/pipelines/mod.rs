@@ -1,5 +1,6 @@
 pub mod figure;
 pub mod skybox;
+pub mod terrain;
 
 // biblioteca
 use gfx::{
