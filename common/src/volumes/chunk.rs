@@ -6,6 +6,8 @@ use vek::*;
 
 // local
 use crate::vol::{
+    Vox,
+    
     BaseVol,
     SizedVol,
 
@@ -23,13 +25,13 @@ pub enum ChunkErr {
 // v = voxel
 // s = tamanho (size)
 // m = metadata de chunk
-pub struct Chunk<V, S: VolSize, M> {
+pub struct Chunk<V: Vox, S: VolSize, M> {
     vox: Vec<V>,
     meta: M,
     phantom: PhantomData<S>
 }
 
-impl<V, S: VolSize, M> Chunk<V, S, M> {
+impl<V: Vox, S: VolSize, M> Chunk<V, S, M> {
     /// utilizado para transformar a posição de voxel em um volume no index correspondente no array do voxel
     #[inline(always)]
 
@@ -49,18 +51,18 @@ impl<V, S: VolSize, M> Chunk<V, S, M> {
     }
 }
 
-impl<V, S: VolSize, M> BaseVol for Chunk<V, S, M> {
+impl<V: Vox, S: VolSize, M> BaseVol for Chunk<V, S, M> {
     type Vox = V;
 
     type Err = ChunkErr;
 }
 
-impl<V, S: VolSize, M> SizedVol for Chunk<V, S, M> {
+impl<V: Vox, S: VolSize, M> SizedVol for Chunk<V, S, M> {
     #[inline(always)]
     fn get_size(&self) -> Vec3<u32> { S::SIZE }
 }
 
-impl<V, S: VolSize, M> ReadVol for Chunk<V, S, M> {
+impl<V: Vox, S: VolSize, M> ReadVol for Chunk<V, S, M> {
     #[inline(always)]
     
     fn get(&self, pos: Vec3<i32>) -> Result<&V, ChunkErr> {
@@ -70,7 +72,7 @@ impl<V, S: VolSize, M> ReadVol for Chunk<V, S, M> {
     }
 }
 
-impl<V, S: VolSize, M> WriteVol for Chunk<V, S, M> {
+impl<V: Vox, S: VolSize, M> WriteVol for Chunk<V, S, M> {
     #[inline(always)]
 
     fn set(&mut self, pos: Vec3<i32>, vox: Self::Vox) -> Result<(), ChunkErr> {
@@ -81,7 +83,7 @@ impl<V, S: VolSize, M> WriteVol for Chunk<V, S, M> {
     }
 }
 
-impl<V: Clone, S: VolSize, M> Chunk<V, S, M> {
+impl<V: Vox: Clone, S: VolSize, M> Chunk<V, S, M> {
     /// cria um novo chunk com as dimensões fornecidas e todos os voxels alinhados com duplicáveis no voxel fornecido
     pub fn filled(vox: V, meta: M) -> Self {
         Self {
