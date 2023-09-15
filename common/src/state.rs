@@ -3,6 +3,7 @@ use std::time::Duration;
 
 // externo
 use specs::World as EcsWorld;
+use shred::Fetch;
 
 // caixote
 use Crate::{
@@ -24,9 +25,7 @@ struct Tick(f64);
 // tipagem utilizada para representar estado do jogo armazenado tanto no client quanto no servidor.
 // isso inclui coisas como componentes, dados de terreno, estado global (ex: chuva), tempo do dia, etc.
 pub struct State {
-    ecs_world: EcsWorld,
-    terrain_map: TerrainMap,
-    time: f64
+    ecs_world: EcsWorld
 }
 
 impl State {
@@ -37,15 +36,13 @@ impl State {
         // registrar recursos utilizados por ecs
         ecs_world.add_resource(TimeOfDay(0.0));
         ecs_world.add_resource(Tick(0.0));
+        ecs_world.add_resource(TerrainMap::new());
 
         // registrar componentes comuns com o estado
         comp::register_local_components(&mut ecs_world);
 
         Self {
-            ecs_world,
-
-            terrain_map: TerrainMap::new(),
-            time: 0.0
+            ecs_world
         }
     }
 
@@ -61,6 +58,11 @@ impl State {
     /// note que isso não deve corresponder com o tempo do dia
     pub fn get_tick(&self) -> f64 {
         self.ecs_world.read_resource::<Tick>().0
+    }
+
+    /// obtém uma referência para esse terreno do estado
+    pub fn terrain<'a>(&'a self) -> Fetch<'a, TerrainMap> {
+        self.ecs_world.read_resource::<TerrainMap>()
     }
 
     // executar tick individual, simulando estado de jogo pela duração recebida
