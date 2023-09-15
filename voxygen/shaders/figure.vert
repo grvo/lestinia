@@ -36,10 +36,13 @@ out vec3 f_pos;
 out vec3 f_norm;
 out vec3 f_col;
 
+flat out uint f_bone_idx;
+
 void main() {
 	f_pos = v_pos;
 	f_norm = v_norm;
 	f_col = v_col;
+	f_bone_idx = v_bone_idx;
 
 	gl_Position =
 		proj_mat *
