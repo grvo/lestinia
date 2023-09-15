@@ -1,9 +1,17 @@
 // biblioteca
 use vek::*;
 
+/// um voxel
+pub trait Vox {
+    fn empty() -> Self;
+
+    fn is_empty(&self) -> bool;
+}
+
 /// um volume que contém dados de voxel
 pub trait BaseVol {
-    type Vox;
+    type Vox: Vox;
+    
     type Err;
 }
 
@@ -61,6 +69,19 @@ pub trait ReadVol: BaseVol {
     #[inline(always)]
 
     fn get(&self, pos: Vec3<i32>) -> Result<&Self::Vox, Self::Err>;
+}
+
+/// volume que fornece a habilidade de sample o dados de voxel
+pub trait SampleVol: BaseVol where Self::Vox: Clone {
+    type Sample: BaseVol + ReadVol;
+
+    /// obter sample de um volume por clonagem de voxels sem o alcance fornecido
+    ///
+    /// note que o valor e a acessibilidade de voxels fora dos bounds do sample
+    /// é definida pela implementação e não deve ser utilizado
+    ///
+    /// note que o volume resultante possui um espaço coordenado ao sample
+    fn sample(&self, range: Aabb<i32>) -> Result<Self::Sample, Self::Err>;
 }
 
 /// volume que fornece acesso de escrita para dados de voxel
