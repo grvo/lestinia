@@ -1,7 +1,7 @@
 #version 330 core
 
 in vec3 f_pos;
-in vec3 f_form;
+in vec3 f_norm;
 in vec3 f_col;
 
 layout (std140)
