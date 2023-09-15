@@ -6,7 +6,12 @@ use dot_vox::DotVoxData;
 
 // caixote
 use crate::{
-    vol::WriteVol,
+    vol::{
+        Vox,
+        
+        WriteVol
+    },
+    
     volumes::dyna::Dyna
 };
 
