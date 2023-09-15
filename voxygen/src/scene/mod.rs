@@ -37,8 +37,11 @@ use crate::{
 
     anim::{
         Animation,
-        CharacterSkeleton,
-        RunAnimation
+
+        character::{
+            CharacterSkeleton,
+            RunAnimation
+        }
     }
 };
 
@@ -168,8 +171,8 @@ impl Scene {
             self.client.stare().get_tick()
         );
 
-        self.test_figure.update_locals(renderer, FigureLocals::default());
-        self.test_figure.update_skeleton(renderer);
+        self.test_figure.update_locals(renderer, FigureLocals::default()).unwrap();
+        self.test_figure.update_skeleton(renderer).unwrap();
     }
 
     /// renderizar cena usando o `renderer` fornecido
