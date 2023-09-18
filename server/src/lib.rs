@@ -3,6 +3,7 @@ use std::time::Duration;
 
 // interno
 use common::state::State;
+use world::World;
 
 #[derive(Debug)]
 pub enum Error {
@@ -15,6 +16,7 @@ pub struct Input {
 
 pub struct Server {
     state: State,
+    world: World
 
     // todo: adicionar estado `meta` aqui
 }
@@ -27,11 +29,17 @@ impl Server {
         }
     }
 
-    /// obtém uma referência do estado do jogo do cliente
+    /// obtém uma referência do estado do jogo do servidor
     pub fn state(&self) -> &State { &self.state }
 
     /// obtém uma referência mutável do estado do jogo do cliente
     pub fn state_mut(&mut self) -> &mut State { &mut self.state }
+
+    /// obtém uma referência para o mundo do servidor
+    pub fn world(&self) -> &World { &self.world }
+
+    /// obtém uma referência mutável do mundo do servidor
+    pub fn world_mut(&mut self) -> &mut World { &mut self.world }
 
     /// executar tick de cliente único, ajudar input e atualizar estado do jogo pela duração recebida
     pub fn tick(&mut self, input: Input, dt: Duration) -> Result<(), Error> {
