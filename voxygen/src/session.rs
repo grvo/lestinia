@@ -40,8 +40,8 @@ impl SessionState {
     pub fn new(renderer: &mut Renderer) -> Self {
         Self {
             // cria uma cena para esta sessão
-            scene: Scene::new(renderer),
-            client: Client::new()
+            scene: Scene::new(renderer, &client),
+            client
         }
     }
 }
