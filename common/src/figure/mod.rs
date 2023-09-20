@@ -18,14 +18,6 @@ use crate::{
 // local
 use self::cell::Cell;
 
-/// um tipo representando uma figura única
-#[derive(Copy, Clone)]
-pub struct Bone {
-    origin: Vec3<f32>,
-    offset: Vec3<f32>,
-    ori: Vec3<f32>
-}
-
 /// um tipo representando um volume que pode ser parte de uma figura animada
 ///
 /// figuras são utilizadas para representar coisas como personagens, npcs, mobs, etc.
