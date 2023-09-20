@@ -91,18 +91,18 @@ impl Scene {
 
             test_figure: Figure::new(
                 renderer, [
-                    Some(load_segment("head.vox").generate_mesh_with_offset(Vec3::new(-7.0, -5.5, -1.0))),
-                    Some(load_segment("chest.vox").generate_mesh_with_offset(Vec3::new(-6.0, -3.0, 0.0))),
-                    Some(load_segment("belt.vox").generate_mesh_with_offset(Vec3::new(-5.0, -3.0, 0.0))),
-                    Some(load_segment("pants.vox").generate_mesh_with_offset(Vec3::new(-5.0, -3.0, 0.0))),
+                    Some(load_segment("head.vox").generate_mesh(Vec3::new(-7.0, -5.5, -1.0))),
+                    Some(load_segment("chest.vox").generate_mesh(Vec3::new(-6.0, -3.0, 0.0))),
+                    Some(load_segment("belt.vox").generate_mesh(Vec3::new(-5.0, -3.0, 0.0))),
+                    Some(load_segment("pants.vox").generate_mesh(Vec3::new(-5.0, -3.0, 0.0))),
                     
-                    Some(load_segment("hand.vox").generate_mesh_with_offset(Vec3::new(-2.0, -2.0, -1.0))),
-                    Some(load_segment("hand.vox").generate_mesh_with_offset(Vec3::new(-2.0, -2.0, -1.0))),
+                    Some(load_segment("hand.vox").generate_mesh(Vec3::new(-2.0, -2.0, -1.0))),
+                    Some(load_segment("hand.vox").generate_mesh(Vec3::new(-2.0, -2.0, -1.0))),
                     
-                    Some(load_segment("foot.vox").generate_mesh_with_offset(Vec3::new(-2.5, -3.0, -2.0))),
-                    Some(load_segment("foot.vox").generate_mesh_with_offset(Vec3::new(-2.5, -3.0, -2.0))),
+                    Some(load_segment("foot.vox").generate_mesh(Vec3::new(-2.5, -3.0, -2.0))),
+                    Some(load_segment("foot.vox").generate_mesh(Vec3::new(-2.5, -3.0, -2.0))),
                     
-                    Some(load_segment("sword.vox").generate_mesh_with_offset(Vec3::new(-6.5, -1.0, 0.0))),
+                    Some(load_segment("sword.vox").generate_mesh(Vec3::new(-6.5, -1.0, 0.0))),
 
                     None,
                     None,
@@ -135,7 +135,7 @@ impl Scene {
     }
 
     /// mantém e atualiza dados da gpu como buffers constantes, modelos, etc.
-    pub fn maintain_gpu_data(&mut self, renderer: &mut Renderer, client: &Client) {
+    pub fn maintain(&mut self, renderer: &mut Renderer, client: &Client) {
         // computar matrizes de câmera
         let (view_mat, proj_mat, cam_pos) = self.camera.compute_dependents();
 
@@ -150,18 +150,18 @@ impl Scene {
             10.0,
             
             client.state().get_time_of_day(),
-            client.state().get_tick()
+            client.state().get_time()
         )])
             .expect("falha ao atualizar constantes globais");
 
         // manter dados gpu do terreno
-        self.terrain.maintain_gpu_data(renderer);
+        self.terrain.maintain(renderer, client);
 
         // TODO: não fazer isso aqui
         RunAnimation::update_skeleton(
             &mut self.test_figure.skeleton,
 
-            client.stare().get_tick()
+            client.stare().get_time()
         );
 
         self.test_figure.update_locals(renderer, FigureLocals::default()).unwrap();
