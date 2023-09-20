@@ -1,15 +1,16 @@
-// projeto
-use common::figure::Segment;
-
 // biblioteca
 use vek::*;
 
 // projeto
-use common::vol::{
-    Vox,
-    
-    SizedVol,
-    ReadVol
+use common::{
+    vol::{
+        Vox,
+        
+        SizedVol,
+        ReadVol
+    },
+
+    figure::Segment
 };
 
 // caixote
@@ -49,8 +50,9 @@ fn create_quad(
 
 impl Meshable for Segment {
     type Pipeline = FigurePipeline;
+    type Supplement = Vec3<f32>;
 
-    fn generate_mesh_with_offset(&self, offs: Vec3<f32>) -> Mesh<FigurePipeline> {
+    fn generate_mesh(&self, offs: Self::Supplement) -> Mesh<Self::Pipeline> {
         let mut mesh = Mesh::new();
 
         for pos in self.iter_positions() {
