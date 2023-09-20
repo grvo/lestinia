@@ -1,3 +1,6 @@
+// padrão
+use std::f32::consts::PI;
+
 // biblioteca
 use vek::*;
 
@@ -19,7 +22,8 @@ impl Animation for RunAnimation {
         time: f64
     ) {
         let wave = (time as f32 * 12.0).sin();
-        let wave_fast = (time as f32 * 6.0).sin();
+        let wave_slow = (time as f32 * 6.0 + PI).sin();
+        let wave_dip = (wave_slow.abs() - 0.5).abs();
 
         skeleton.head.offset = Vec3::unit_z() * 13.0;
         skeleton.head.ori = Quaternion::rotation_z(wave * 0.3);
