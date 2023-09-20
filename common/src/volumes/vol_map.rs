@@ -88,6 +88,20 @@ impl<V: Vox + Clone, S: VolSize, M> SampleVol for VolMap<V, S, M> {
     ///
     /// note que o volume resultante não possui metadata dos chunks originais
     fn sample(&self, range: Aabb<i32>) -> Result<Self::Sample, VolMapErr> {
+        // retorna caso não tenha todos os chunks necessários que é preciso
+        let min_chunk = Self::chunk_key(range.min);
+        let max_chunk = Self::chunk_key(range.max - Vec3::one());
+
+        for x in min_chunk.x..=max_chunk.x {
+            for y in min_chunk.y..=max_chunk.y {
+                for z in min_chunk.z..=max_chunk.z {
+                    if self.chunks.get(&Vec3::new(x, y, z)).is_none() {
+                        return Err(VolMapErr::NoSuchChunk);
+                    }
+                }
+            }
+        }
+        
         let mut sample = Dyna::filled(
             range.size().map(|e| e as u32).into(),
             V::empty(),
@@ -125,6 +139,10 @@ impl<V: Vox, S: VolSize, M> VolMap<V, S, M> {
         Self {
             chunks: HashMap::new(),
         }
+    }
+
+    pub fn chunk_size() -> Vec3<u32> {
+        S::SIZE
     }
 
     pub fn insert(&mut self, key: Vec3<i32>, chunk: Chunk<V, S, M>) -> Option<Chunk<V, S, M>> {
