@@ -56,14 +56,16 @@ impl SessionState {
 
         Ok(())
     }
+
+    /// limpar a sessão depois de um tick
+    pub fn cleanup(&mut self) {
+        self.client.cleanup();
+    }
     
     /// renderizar a sessão para a tela
     ///
     /// esse método deve ser chamado uma vez por frame
     pub fn render(&mut self, renderer: &mut Renderer) {
-        // manter dado de gpu da cena
-        self.scene.maintain_gpu_data(renderer, &self.client);
-
         // limpar a tela
         renderer.clear(BG_COLOR);
 
@@ -82,6 +84,15 @@ impl PlayState for SessionState {
 
         // configurar clock de fps
         let mut clock = Clock::new();
+
+        // carregar novos chunks. todo: remover isso
+        for x in -2..3 {
+            for y in -2..3 {
+                for z in -1..2 {
+                    self.client.load_chunk(Vec3::new(x, y, z));
+                }
+            }
+        }
 
         // loop de jogo
         loop {
@@ -104,7 +115,10 @@ impl PlayState for SessionState {
             self.tick(clock.get_last_delta())
                 .expect("falha ao tickar a cena");
 
-            // renderizar a sessão
+            // mantém a cena
+            self.scene.maintain(global_state.window.renderer_mut(), &self.client);
+
+            // renderiza a sessão
             self.render(global_state.window.renderer_mut());
 
             // mostrar o frame na janela
@@ -114,8 +128,13 @@ impl PlayState for SessionState {
 
             // esperar para o próximo tick
             clock.tick(Duration::from_millis(1000 / FPS));
+
+            // limpar coisas depois de um tick
+            self.cleanup();
         }
     }
 
-    fn name(&self) -> &'static str { "sessão" }
+    fn name(&self) -> &'static str {
+        "sessão"
+    }
 }
