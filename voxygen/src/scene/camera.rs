@@ -23,7 +23,7 @@ impl Camera {
             focus: Vec3::unit_z() * 10.0,
             ori: Vec3::zero(),
 
-            dist: 100.0,
+            dist: 150.0,
             fov: 1.3,
             aspect: 1.618
         }
@@ -66,8 +66,22 @@ impl Camera {
     }
 
     /// obter a posição de foco da câmera
-    pub fn get_focus_pos(&self) -> Vec3<f32> { self.focus }
+    pub fn get_focus_pos(&self) -> Vec3<f32> {
+        self.focus
+    }
 
     /// determinar a posição de foco da câmera
-    pub fn set_focus_pos(&mut self, focus: Vec3<f32>) { self.focus = focus; }
+    pub fn set_focus_pos(&mut self, focus: Vec3<f32>) {
+        self.focus = focus;
+    }
+
+    /// obtém o raio de aspecto da câmera
+    pub fn get_aspect_ratio(&self) -> f32 {
+        self.aspect
+    }
+
+    /// determina o raio de aspecto da câmera
+    pub fn set_aspect_ratio(&mut self, aspect: f32) {
+        self.aspect = aspect;
+    }
 }
