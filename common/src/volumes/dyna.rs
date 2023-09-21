@@ -11,6 +11,7 @@ use crate::vol::{
     WriteVol
 };
 
+#[derive(Debug)]
 pub enum DynaErr {
     OutOfBounds
 }
