@@ -36,6 +36,8 @@ impl World {
     }
 
     pub fn generate_chunk(&self, chunk_pos: Vec3<i32>) -> TerrainChunk {
+        // todo: isso é todo o código de teste, remover/melhorar isso depois
+        
         let mut chunk = TerrainChunk::filled(Block::empty(), TerrainChunkMeta::void());
 
         let air = Block::empty();
@@ -63,7 +65,7 @@ impl World {
                 }
             } else {
                 air
-            });
+            }).unwrap();
         }
 
         chunk
