@@ -17,8 +17,9 @@ use crate::{
 
 pub struct Window {
     events_loop: glutin::EventsLoop,
+    renderer: Renderer,
     window: glutin::GlWindow,
-    renderer: Renderer
+    cursor_grabbed: bool
 }
 
 impl Window {
@@ -50,7 +51,6 @@ impl Window {
 
         let tmp = Ok(Self {
             events_loop,
-            window,
 
             renderer: Renderer::new(
                 device,
@@ -58,7 +58,11 @@ impl Window {
 
                 tgt_color_view,
                 tgt_depth_view
-            )?
+            )?,
+
+            window,
+
+            cursor_grabbed: false
         });
 
         tmp
@@ -68,6 +72,10 @@ impl Window {
     pub fn renderer_mut(&mut self) -> &mut Renderer { &mut self.renderer }
 
     pub fn fetch_events(&mut self) -> Vec<Event> {
+        // copiar dados que são necessários para fechadura de eventos para isolar erros de tempo de vida
+        // todo: remover isso caso/quando o compilador permitir isso
+        let cursor_grabbed = self.cursor_grabbed;
+        
         let mut events = vec![];
 
         self.events_loop.poll_events(|event| match event {
@@ -75,11 +83,21 @@ impl Window {
                 glutin::WindowEvent::CloseRequested => events.push(Event::Close),
                 glutin::WindowEvent::ReceivedCharacter(c) => events.push(Event::Char(c)),
                 
+                glutin::WindowEvent::KeyboardInput { input, .. } => match input.virtual_keycode {
+                    Some(glutin::VirtualKeyCode::Escape) => events.push(if input.state == glutin::ElementState::Pressed {
+                        Event::KeyDown(Key::ToggleCursor)
+                    } else {
+                        Event::KeyUp(Key::ToggleCursor)
+                    }),
+
+                    _ => {}
+                },
+                
                 _ => {}
             },
 
             glutin::Event::DeviceEvent { event, .. } => match event {
-                glutin::DeviceEvent::MouseMotion { delta: (dx, dy), .. } =>
+                glutin::DeviceEvent::MouseMotion { delta: (dx, dy), .. } if cursor_grabbed =>
                     events.push(Event::CursorPan(Vec2::new(dx as f32, dy as f32))),
 
                 _ => {}
@@ -97,19 +115,23 @@ impl Window {
             .map_err(|err| Error::BackendError(Box::new(err)))
     }
 
-    pub fn trap_cursor(&mut self) {
-        self.window.hide_cursor(true);
-
-        self.window.grab_cursor(true)
-            .expect("falha ao capturar o cursor");
+    pub fn is_cursor_grabbed(&self) -> bool {
+        self.cursor_grabbed;
     }
 
-    pub fn untrap_cursor(&mut self) {
-        self.window.hide_cursor(false);
+    pub fn grab_cursor(&mut self, grab: bool) {
+        self.cursor_grabbed = grab;
+
+        self.window.hide_cursor(grab);
         
-        self.window.grab_cursor(false)
-            .expect("falha ao deixar de capturar o cursor");
+        self.window.grab_cursor(grab)
+            .expect("falha ao capturar ou deixar de capturar o cursor");
     }
+}
+
+/// representa uma chave que o jogo reconhece depois de um mapeamento de teclado
+pub enum Key {
+    ToggleCursor
 }
 
 /// representa um evento chegando da janela
@@ -121,5 +143,11 @@ pub enum Event {
     Char(char),
 
     /// cursor que foi paralizado ao redor da tela enquanto capturado
-    CursorPan(Vec2<f32>)
+    CursorPan(Vec2<f32>),
+
+    /// chave que o jogo reconhece para ser pressionado para baixo
+    keyDown(Key),
+
+    /// chave que o jogo reconhece para ser lançado para baixo
+    keyUp(Key)
 }
