@@ -75,12 +75,31 @@ impl Window {
         // copiar dados que são necessários para fechadura de eventos para isolar erros de tempo de vida
         // todo: remover isso caso/quando o compilador permitir isso
         let cursor_grabbed = self.cursor_grabbed;
+        let renderer = &mut self.renderer;
+        let window = &mut self.window;
         
         let mut events = vec![];
 
         self.events_loop.poll_events(|event| match event {
             glutin::Event::WindowEvent { event, .. } => match event {
                 glutin::WindowEvent::CloseRequested => events.push(Event::Close),
+
+                glutin::WindowEvent::Resized(glutin::dpi::LogicalSize {
+                    width,
+                    height
+                }) => {
+                    let (mut color_view, mut depth_view) = renderer.target_views_mut();
+
+                    gfx_window_glutin::update_views(
+                        &window,
+
+                        &mut color_view,
+                        &mut depth_view
+                    );
+
+                    events.push(Event::Resize(Vec2::new(width as u32, height as u32)));
+                },
+                
                 glutin::WindowEvent::ReceivedCharacter(c) => events.push(Event::Char(c)),
                 
                 glutin::WindowEvent::KeyboardInput { input, .. } => match input.virtual_keycode {
@@ -138,6 +157,9 @@ pub enum Key {
 pub enum Event {
     /// a janela que foi solicitada para ser fechada
     Close,
+
+    /// a janela que será redimensionada
+    Resize(Vec2<u32>),
 
     /// chave que foi digitada que corresponde ao caractere específico
     Char(char),
