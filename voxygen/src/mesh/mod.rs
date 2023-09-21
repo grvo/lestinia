@@ -1,9 +1,6 @@
 pub mod segment;
 pub mod terrain;
 
-// biblioteca
-use vek::*;
-
 // caixote
 use crate::render::{
     self,
