@@ -11,12 +11,7 @@ use common::{
     },
 
     volumes::dyna::Dyna,
-    
-    terrain::{
-        Block,
-
-        TerrainChunk
-    }
+    terrain::Block
 };
 
 // caixote
