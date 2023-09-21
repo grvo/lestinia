@@ -22,7 +22,12 @@ use crate::{
 
     GlobalState,
 
-    window::Event,
+    window::{
+        Event,
+
+        Key
+    },
+    
     render::Renderer,
     scene::Scene
 };
@@ -80,14 +85,14 @@ impl SessionState {
 impl PlayState for SessionState {
     fn play(&mut self, global_state: &mut GlobalState) -> PlayStateResult {
         // capturar cursor
-        global_state.window.trap_cursor();
+        global_state.window.grab_cursor(true);
 
         // configurar clock de fps
         let mut clock = Clock::new();
 
         // carregar novos chunks. todo: remover isso
-        for x in -2..3 {
-            for y in -2..3 {
+        for x in -4..5 {
+            for y in -4..5 {
                 for z in -1..2 {
                     self.client.load_chunk(Vec3::new(x, y, z));
                 }
@@ -104,8 +109,15 @@ impl PlayState for SessionState {
                     // quando 'q' for pressionado, deixar sessão
                     Event::Char('q') => return PlayStateResult::Pop,
 
+                    // manter captura de cursor
+                    Event::KeyDown(Key::ToggleCursor) => {
+                        global_state.window.grab_cursor(!global_state.window.is_cursor_grabbed());
+                    },
+
                     // passar todos os outros eventos para a cena
-                    event => self.scene.handle_input_event(event)
+                    event => {
+                        self.scene.handle_input_event(event);
+                    }
                 };
 
                 // TODO: fazer algo se o evento não for auxiliado?
