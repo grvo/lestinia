@@ -7,6 +7,7 @@ pub mod mesh;
 pub mod render;
 pub mod scene;
 pub mod session;
+pub mod ui;
 pub mod window;
 
 // re-exportações
@@ -65,18 +66,18 @@ fn main() {
     // logging inicial
     pretty_env_logger::init();
 
+    // configura o estado global
+    let mut global_state = GlobalState {
+        window: Window::new()
+            .expect("falha ao criar janela")
+    };
+
     // configura o estado de play inicial
     let mut states: Vec<Box<dyn PlayState>> = vec![Box::new(TitleState::new())];
 
     states.last().map(|current_state| {
         log::info!("jogo iniciado com o estado '{}'", current_state.name())
     });
-
-    // configura o estado global
-    let mut global_state = GlobalState {
-        window: Window::new()
-            .expect("falha ao criar janela")
-    };
 
     while let Some(state_result) = states.last_mut().map(|last| last.play(&mut global_state)) {
         // implementar lógica de transferência de estado
