@@ -1,22 +1,43 @@
 // biblioteca
 use vek::*;
+use image;
 
 // caixote
 use crate::{
     PlayState,
     PlayStateResult,
+    
     GlobalState,
     window::Event,
-    session::SessionState
+    session::SessionState,
+
+    render::Renderer,
+
+    ui::{
+        Ui,
+
+        element::{
+            Widget,
+
+            image::Image
+        }
+    }
 };
 
-pub struct TitleState;
+pub struct TitleState {
+    ui: Ui
+}
 
 impl TitleState {
     /// cria um novo `titlestate`
 
-    pub fn new() -> Self {
-        Self
+    pub fn new(renderer: &mut Renderer) -> Self {
+        let img = Image::new(renderer, &image::open(concat!(env!("CARGO_MANIFEST_DIR"), "/test_assets/test.png")).unwrap()).unwrap();
+        let widget = Widget::new(renderer, img).unwrap();
+
+        Self {
+            ui: Ui::new(renderer, widget).unwrap()
+        }
     }
 }
 
@@ -45,6 +66,12 @@ impl PlayState for TitleState {
             global_state.window
                 .renderer_mut()
                 .clear(BG_COLOR);
+
+            // mantém a ui
+            self.ui.maintain(global_state.window.renderer_mut());
+
+            // desenha a ui na tela
+            self.ui.render(global_state.window.renderer_mut());
 
             // finalizar o frame
             global_state.window
