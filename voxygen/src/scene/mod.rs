@@ -119,6 +119,16 @@ impl Scene {
         }
     }
 
+    /// obtém uma referência para a cena da câmera
+    pub fn camera(&self) -> &Camera {
+        &self.camera
+    }
+
+    /// obtém uma referência mutável para a cena da câmera
+    pub fn camera_mut(&mut self) -> &mut Camera {
+        &mut self.camera
+    }
+
     /// auxilia um evento de input de usuário que está sendo recebido (exemplos: cursor movendo, tecla pressionada, janela fechada, etc.)
     pub fn handle_input_event(&mut self, event: Event) -> bool {
         match event {
