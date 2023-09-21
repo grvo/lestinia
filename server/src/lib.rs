@@ -62,4 +62,10 @@ impl Server {
         // finalizar o tick, passar controle de volta para o frontend (passo 6)
         Ok(())
     }
+
+    /// limpar o servidor depois de tick
+    pub fn cleanup(&mut self) {
+        // limpar o estado local
+        self.state.cleanup();
+    }
 }
