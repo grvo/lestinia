@@ -106,6 +106,16 @@ impl Renderer {
         })
     }
 
+    /// obtém referências para a renderização interna que é mostrada diretamente pela janela
+    pub fn target_views(&self) -> (&TgtColorView, &TgtDepthView) {
+        (&self.tgt_color_view, &self.tgt_depth_view)
+    }
+
+    /// obtém referências mutáveis para a renderização interna que é mostrada diretamente pela janela
+    pub fn target_views_mut(&mut self) -> (&mut TgtColorView, &mut TgtDepthView) {
+        (&mut self.tgt_color_view, &mut self.tgt_depth_view)
+    }
+
     /// lista a limpeza de cor e profundidade prontos para um novo frame ser renderizado
     /// TODO: fazer a versão disso que não limpe o alvo colorido por rapidez
     fn clear(&mut self, col: Rgba<f32>) {
