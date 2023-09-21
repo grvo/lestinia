@@ -17,6 +17,7 @@ use crate::vol::{
     VolSize
 };
 
+#[derive(Debug)]
 pub enum ChunkErr {
     OutOfBounds
 }
