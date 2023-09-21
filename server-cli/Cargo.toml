@@ -1,0 +1,12 @@
+[package]
+name = "lestinia-server-cli"
+version = "0.1.0"
+authors = ["grivo <notgrivo@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+server = { package = "lestinia-server", path = "../server" }
+common = { package = "lestinia-common", path = "../common" }
+
+log = "0.4"
+pretty_env_logger = "0.3"
