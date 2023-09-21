@@ -33,7 +33,7 @@ pub struct GlobalState {
 impl GlobalState {
     /// chamado depois de alguma mudança no estado de jogar que ocorreu
     pub fn on_play_state_changed(&mut self) {
-        self.window.untrap_cursor();
+        self.window.grab_cursor(false);
     }
 }
 
