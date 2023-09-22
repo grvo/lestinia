@@ -10,11 +10,15 @@ use gfx::{
     }
 };
 
+use image;
+
 // local
 use super::{
     consts::Consts,
-    model::Model,
     mesh::Mesh,
+
+    model::Model,
+    texture::Texture,
 
     Pipeline,
     RenderError,
@@ -25,7 +29,8 @@ use super::{
         Globals,
         figure,
         skybox,
-        terrain
+        terrain,
+        ui
     }
 };
 
@@ -53,7 +58,8 @@ pub struct Renderer {
 
     skybox_pipeline: GfxPipeline<skybox::pipe::Init<'static>>,
     figure_pipeline: GfxPipeline<figure::pipe::Init<'static>>,
-    terrain_pipeline: GfxPipeline<terrain::pipe::Init<'static>>
+    terrain_pipeline: GfxPipeline<terrain::pipe::Init<'static>>,
+    ui_pipeline: GfxPipeline<ui::pipe::Init<'static>>
 }
 
 impl Renderer {
@@ -92,6 +98,15 @@ impl Renderer {
             include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/terrain.frag"))
         )?;
 
+        // constrói uma pipeline para renderização de elementos ui
+        let ui_pipeline = create_pipeline(
+            &mut factory,
+            ui::pipe::new(),
+
+            include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/ui.vert")),
+            include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/ui.frag"))
+        )?;
+
         Ok(Self {
             device,
             encoder: factory.create_command_buffer().into(),
@@ -102,7 +117,8 @@ impl Renderer {
 
             skybox_pipeline,
             figure_pipeline,
-            terrain_pipeline
+            terrain_pipeline,
+            ui_pipeline
         })
     }
 
@@ -114,6 +130,14 @@ impl Renderer {
     /// obtém referências mutáveis para a renderização interna que é mostrada diretamente pela janela
     pub fn target_views_mut(&mut self) -> (&mut TgtColorView, &mut TgtDepthView) {
         (&mut self.tgt_color_view, &mut self.tgt_depth_view)
+    }
+
+    /// obtém a resolução do alvo de renderização
+    pub fn get_resolution(&self) -> Vec2<u16> {
+        Vec2::new(
+            self.tgt_color_view.get_dimensions().0,
+            self.tgt_color_view.get_dimensions().1
+        )
     }
 
     /// lista a limpeza de cor e profundidade prontos para um novo frame ser renderizado
@@ -156,6 +180,15 @@ impl Renderer {
             &mut self.factory,
             mesh
         ))
+    }
+
+    /// cria uma nova textura por meio da imagem fornecida
+    pub fn create_texture<P: Pipeline>(&mut self, image: &image::DynamicImage) -> Result<Texture<P>, RenderError> {
+        Texture::new(
+            &mut self.factory,
+
+            image
+        )
     }
 
     /// lista a renderização do modelo de skybox fornecido
@@ -225,6 +258,30 @@ impl Renderer {
                 vbuf: model.vbuf.clone(),
                 locals: locals.buf.clone(),
                 globals: globals.buf.clone(),
+
+                tgt_color: self.tgt_color_view.clone(),
+                tgt_depth: self.tgt_depth_view.clone()
+            }
+        );
+    }
+
+    /// lista a renderização do elemento ui fornecido para o frame a seguir
+    pub fn render_ui_element(
+        &mut self,
+
+        model: &Model<ui::UiPipeline>,
+        locals: &Consts<ui::Locals>,
+        tex: &Texture<ui::UiPipeline>
+    ) {
+        self.encoder.draw(
+            &model.slice,
+            &self.ui_pipeline_pso,
+
+            &ui::pipe::Data {
+                vbuf: model.vbuf.clone(),
+                locals: locals.buf.clone(),
+
+                tex: (tex.srv.clone(), tex.sampler.clone()),
 
                 tgt_color: self.tgt_color_view.clone(),
                 tgt_depth: self.tgt_depth_view.clone()
