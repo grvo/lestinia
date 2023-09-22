@@ -119,6 +119,10 @@ impl Window {
                 glutin::DeviceEvent::MouseMotion { delta: (dx, dy), .. } if cursor_grabbed =>
                     events.push(Event::CursorPan(Vec2::new(dx as f32, dy as f32))),
 
+                glutin::DeviceEvent::MouseWheel {
+                    delta: glutin::MouseScrollDelta::LineDelta(_x, y), ..
+                } if cursor_grabbed => events.push(Event::Zoom(y as f32)),
+
                 _ => {}
             },
 
@@ -166,6 +170,9 @@ pub enum Event {
 
     /// cursor que foi paralizado ao redor da tela enquanto capturado
     CursorPan(Vec2<f32>),
+
+    /// a câmera que foi solicitada para zoom
+    Zoom(f32),
 
     /// chave que o jogo reconhece para ser pressionado para baixo
     keyDown(Key),
