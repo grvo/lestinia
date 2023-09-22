@@ -106,11 +106,6 @@ impl PlayState for SessionState {
                 let _handled = match event {
                     Event::Close => return PlayStateResult::Shutdown,
 
-                    // quando a janela for redimensionada, mudar o raio de aspecto da câmera
-                    Event::Resize(dims) => {
-                        self.scene.camera_mut().set_aspect_ratio(dims.x as f32 / dims.y as f32);
-                    },
-
                     // quando 'q' for pressionado, deixar sessão
                     Event::Char('q') => return PlayStateResult::Pop,
 
