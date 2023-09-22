@@ -1,7 +1,11 @@
 [package]
 name = "lestinia-common"
 version = "0.1.0"
-authors = ["grivo <notgrivo@gmail.com>"]
+authors = [
+  "grivo <notgrivo@gmail.com>",
+  "joshua barretto <joshua.s.barretto@gmail.com>",
+  "maciej cwięka <mckol363@gmail.com>"
+]
 edition = "2018"
 
 [dependencies]
@@ -10,3 +14,8 @@ shred = "0.7"
 vek = "0.9"
 dot_vox = "1.0"
 threadpool = "1.7"
+mio = "0.6"
+mio-extras = "2.0"
+serde = "1.0"
+serde_derive = "1.0"
+bincode = "1.0"
