@@ -148,7 +148,7 @@ impl Scene {
 
             // aproxima a câmera quando um evento zoom ocorre
             Event::Zoom(delta) => {
-                self.camera.zoom_by(delta);
+                self.camera.zoom_by(-delta);
 
                 true
             },
