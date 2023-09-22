@@ -132,9 +132,23 @@ impl Scene {
     /// auxilia um evento de input de usuário que está sendo recebido (exemplos: cursor movendo, tecla pressionada, janela fechada, etc.)
     pub fn handle_input_event(&mut self, event: Event) -> bool {
         match event {
+            // quando a janela for redimensionada, mudar o alcance de aspecto da câmera
+            Event::Resize(dims) => {
+                self.camera.set_aspect_ratio(dims.x as f32 / dims.y as f32);
+
+                true
+            },
+            
             // paralizar o cursor faz com que a câmera rotacione
             Event::CursorPan(delta) => {
                 self.camera.rotate_by(Vec3::from(delta) * CURSOR_PAN_SCALE);
+
+                true
+            },
+
+            // aproxima a câmera quando um evento zoom ocorre
+            Event::Zoom(delta) => {
+                self.camera.zoom_by(delta);
 
                 true
             },
