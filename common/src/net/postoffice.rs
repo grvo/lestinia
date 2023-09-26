@@ -1,8 +1,12 @@
 // padrão
 use core::time::Duration;
-use std::collections::VecDeque;
-use std::net::SocketAddr;
-use std::thread;
+
+use std::{
+    collections::VecDeque,
+    net::SocketAddr,
+
+    thread
+};
 
 // externo
 use mio::{
@@ -24,11 +28,16 @@ use mio_extras::channel::{
 };
 
 // caixote
-use super::data::ControlMsg;
-use super::error::PostError;
-use super::postbox::PostBox;
-
 use super::{
+    data::ControlMsg,
+
+    error::{
+        PostError,
+        PostErrorInternal
+    },
+
+    postbox::PostBox,
+    
     PostRecv,
     PostSend
 };
@@ -47,8 +56,9 @@ where
 {
     handle: Option<thread::JoinHandle<()>>,
     ctrl: Sender<ControlMsg>,
-    recv: Receiver<Result<PostBox<S, R>, PostError>>,
-    poll: Poll
+    recv: Receiver<Result<PostBox<S, R>, PostErrorInternal>>,
+    poll: Poll,
+    err: Option<PostErrorInternal>
 }
 
 impl<S, R> PostOffice<S, R>
@@ -57,8 +67,8 @@ where
     R: PostRecv
 {
     /// cria um novo [`postoffice`] ouvindo por endereços específicos
-    pub fn new(add: &SocketAddr) -> Result<Self, PostError> {
-        let listener = TcpListener::bind(addr)?;
+    pub fn new<A: Into<SocketAddr>>(addr: A) -> Result<Self, PostError> {
+        let listener = TcpListener::bind(&addr.into())?;
 
         let (ctrl_tx, ctrl_rx) = channel();
         let (recv_tx, recv_rx) = channel();
@@ -81,38 +91,55 @@ where
             ctrl: ctrl_tx,
             recv: recv_rx,
 
-            poll: postbox_poll
+            poll: postbox_poll,
+
+            err: None
         })
     }
 
+    /// retorna um `option<posterror>` indicando o status atual de `postoffice`
+    pub fn status(&self) -> Option<PostError> {
+        self.err.as_ref().map(|err| err.into())
+    }
+
     /// método sem bloqueio retornando um iterator por meio de novas conexões capturadas em [`postbox`]
-    pub fn get_iter(
-        &self
-    ) -> Result<impl Iterator<Item = Result<PostBox<S, R>, PostError>>, PostError> {
+    pub fn new_connections(
+        &mut self
+    ) -> impl Iterator<Item = PostBox<S, R>> {
         let mut events = Events::with_capacity(256);
+        let mut conns = VecDeque::new();
 
-        self.poll.poll(&mut events, Some(Duration::new(0, 0)))?;
+        // caso ocorrer um erro, ou já tenha ocorrido, deixar pra lá
+        if let Some(_) = self.err {
+            return conns.into_iter();
+        } else if let Err(err) = self.poll.poll(&mut events, Some(Duration::new(0, 0))) {
+            self.err = Some(err.into());
 
-        let mut conns: VecDeque<Result<PostBox<S, R>, PostError>> = VecDeque::new();
+            return conns.into_iter();
+        }
 
         for event in events {
             match event.token() {
-                DATA_TOKEN => {
-                    const.push_back(self.recv.try_recv(?);
-                }
+                // ignorar erro recv
+                DATA_TOKEN => match self.recv.try_recv() {
+                    Ok(Ok(conn)) => conns.push_back(conn),
+                    
+                    Err(err) => self.err = Some(err.into()),
+                    Ok(Err(err)) => self.err = Some(err.into())
+                },
 
                 _ => ()
             }
         }
 
-        Ok(conns.into_iter())
+        conns.into_iter()
     }
 }
 
 fn postoffice_thread<S, R>(
     listener: TcpListener,
     ctrl_rx: Receiver<ControlMsg>,
-    recv_tx: Sender<Result<PostBox<S, R>, PostError>>,
+    recv_tx: Sender<Result<PostBox<S, R>, PostErrorInternal>>,
     poll: Poll
 ) where
     S: PostSend,
@@ -132,7 +159,9 @@ fn postoffice_thread<S, R>(
                 CONN_TOKEN => {
                     let (conn, _addr) = listener.accept().unwrap();
 
-                    recv_tx.send(PostBox::from_tcpstream(conn)).unwrap();
+                    recv_tx.send(PostBox::from_tcpstream(conn)
+                        // todo: contar as falhas de criar um postbox aqui como um 'internal_error'
+                        .map_err(|_| PostErrorInternal::MioError)).unwrap();
                 }
 
                 _ => ()
