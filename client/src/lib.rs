@@ -8,6 +8,8 @@ use threadpool;
 
 // projeto
 use common::{
+    comp::phys::Vel,
+    
     state::State,
     terrain::TerrainChunk
 };
@@ -23,6 +25,7 @@ pub enum Error {
 
 pub struct Input {
     // todo: usar essa tipagem para gerenciar input do client
+    pub move_vec: Vec2<f32>
 }
 
 pub struct Client {
@@ -67,6 +70,7 @@ impl Client {
     // todo: obtém o rid disso
     pub fn with_test_state(mut self) -> Self {
         self.chunk = Some(self.world.generate_chunk(Vec3::zero()));
+        self.player = Some(self.state.new_test_player());
 
         self
     }
@@ -88,6 +92,11 @@ impl Client {
         &mut self.state
     }
 
+    /// obtém a entidade player
+    pub fn player(&self) -> Option<EcsEntity> {
+        self.player
+    }
+
     /// obtém o número de tick atual
     pub fn get_tick(&self) -> u64 {
         self.tick
@@ -105,6 +114,29 @@ impl Client {
         // 3) performar tick localstate único (ex: atualizar o mundo e suas entidades)
         // 4) ir dentro da atualização de terreno e aplicar todas as mudanças para o terreno
         // 5) finalizar o tick, passando controle para a thread principal e voltar para o frontend
+
+        // (passo 1)
+        if let Some(p) = self.player {
+            let vel = input.move_vec;
+
+            const MIN_LOOKING: f32 = 0.5;
+            const LEANING_FAC: f32 = 0.05;
+
+            let dir = Vec3::from([
+                // rotação
+                match vel.magnitude() > MIN_LOOKING {
+                    true => vel[0].atan2(vel[1]),
+
+                    _ => 0.0
+                },
+
+                // lean
+                Vec2::new(vel[0], vel[1]).magnitude() * LEANING_FAC
+            ]);
+
+            // todo: determinar aceleração em vez de ajustar cálculos
+            self.state.write_component(p, Vel(Vec3::from(vel)));
+        }
 
         // tick para o localstate do client (passo 3)
         self.state.tick(dt);
