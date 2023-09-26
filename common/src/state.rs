@@ -2,17 +2,26 @@
 use std::time::Duration;
 
 // biblioteca
-use specs::World as EcsWorld;
-use vek::*;
-
 use shred::{
     Fetch,
     FetchMut
 };
 
+use specs::{
+    Builder,
+    Component,
+    DispatcherBuilder,
+    
+    Entity as EcsEntity,
+    World as EcsWorld
+};
+
+use vek::*;
+
 // caixote
 use Crate::{
     comp,
+    sys,
 
     terrain::TerrainMap
 };
@@ -26,6 +35,10 @@ struct TimeOfDay(f64);
 
 /// recurso para armazenar o tempo de tick (exemplo: físicas)
 struct Time(f64);
+
+/// recurso utilizado para armazenar o tempo desde o último tick
+#[derive(Default)]
+pub struct DeltaTime(pub f64);
 
 pub struct Changes {
     pub new_chunks: Vec<Vec3<i32>>,
@@ -64,6 +77,7 @@ impl State {
         // registrar recursos utilizados por ecs
         ecs_world.add_resource(TimeOfDay(0.0));
         ecs_world.add_resource(Time(0.0));
+        ecs_world.add_resource(DeltaTime(0.0));
         ecs_world.add_resource(TerrainMap::new());
 
         // registrar componentes comuns com o estado
@@ -74,6 +88,23 @@ impl State {
             
             changes: Changes::default()
         }
+    }
+
+    // todo: obter rid disso
+    pub fn new_test_player(&mut self) -> EcsEntity {
+        self.ecs_world
+            .create_entity()
+
+            .with(comp::phys::Pos(Vec3::default()))
+            .with(comp::phys::Vel(Vec3::default()))
+            .with(comp::phys::Dir(Vec3::default()))
+            
+            .build()
+    }
+
+    /// escreve um componente
+    pub fn write_component<C: Component>(&mut self, e: EcsEntity, c: C) {
+        let _ = self.ecs_world.write_storage().insert(e, c);
     }
 
     /// obtém uma referência para o mundo ecs interno
@@ -108,12 +139,12 @@ impl State {
     }
 
     /// obtém uma referência para esse terreno do estado
-    pub fn terrain<'a>(&'a self) -> Fetch<'a, TerrainMap> {
+    pub fn terrain(&self) -> Fetch<TerrainMap> {
         self.ecs_world.read_resource::<TerrainMap>()
     }
 
     // todo: obter rid disso quando não for necessário
-    pub fn terrain_mut<'a>(&'a mut self) -> FetchMut<'a, TerrainMap> {
+    pub fn terrain_mut(&mut self) -> FetchMut<TerrainMap> {
         self.ecs_world.write_resource::<TerrainMap>()
     }
 
@@ -123,6 +154,19 @@ impl State {
         self.ecs_world.write_resource::<TimeOfDay>().0 += dt.as_float_secs() * DAY_CYCLE_FACTOR;
 
         self.ecs_world.write_resource::<Time>().0 += dt.as_float_secs();
+
+        // rodar sistemas para atualizar o mundo
+        self.ecs_world.write_resource::<DeltaTime>().0 = dt.as_float_secs();
+
+        // cria e roda um dispatcher para os sistemas ecs
+        let mut dispatch_builder = DispatcherBuilder::new();
+
+        sys::add_local_systems(&mut dispatch_builder);
+
+        // isso dispatcha todos os sistemas em paralelo
+        dispatch_builder.build().dispatch(&self.ecs_world.res);
+
+        self.ecs_world.maintain();
     }
 
     /// limpar o estado depois de tick
