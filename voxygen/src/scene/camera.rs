@@ -57,15 +57,16 @@ impl Camera {
 
     /// rotaciona a câmera por meio de foco por meio de delta recebido, limitando o input
     pub fn rotate_by(&mut self, delta: Vec3<f32>) {
-        self.ori += delta;
-
-        // capturar roll da câmera
-        self.ori.x = self.ori.x % (2.0 * PI);
+        // capturar yaw da câmera
+        self.ori.x = (self.ori.x + delta.x) % (2.0 * PI);
 
         // clamp da câmera para limites verticais
-        self.ori.y = self.ori.y
+        self.ori.y = (self.ori.y + delta.y)
             .min(PI / 2.0)
             .max(-PI / 2.0);
+        
+        // capturar roll da câmera
+        self.ori.z = (self.ori.z + delta.z) % (2.0 * PI);
     }
 
     /// aproxima a câmera por meio do delta fornecido, limitando o input
