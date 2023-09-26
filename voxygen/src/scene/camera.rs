@@ -59,6 +59,9 @@ impl Camera {
     pub fn rotate_by(&mut self, delta: Vec3<f32>) {
         self.ori += delta;
 
+        // capturar roll da câmera
+        self.ori.x = self.ori.x % (2.0 * PI);
+
         // clamp da câmera para limites verticais
         self.ori.y = self.ori.y
             .min(PI / 2.0)
@@ -89,5 +92,10 @@ impl Camera {
     /// determina o raio de aspecto da câmera
     pub fn set_aspect_ratio(&mut self, aspect: f32) {
         self.aspect = aspect;
+    }
+
+    /// obtém a orientação da câmera
+    pub fn get_orientation(&self) -> Vec3<f32> {
+        self.ori
     }
 }
