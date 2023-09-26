@@ -7,7 +7,12 @@ use vek::*;
 use dot_vox;
 
 // projeto
-use common::figure::Segment;
+use common::{
+    comp::phys::Pos as PosComp,
+
+    figure::Segment
+};
+
 use client::Client;
 
 // caixote
@@ -160,6 +165,24 @@ impl Scene {
 
     /// mantém e atualiza dados da gpu como buffers constantes, modelos, etc.
     pub fn maintain(&mut self, renderer: &mut Renderer, client: &Client) {
+        // obtém a posição do jogador
+        let player_pos = match client.player() {
+            Some(entity) => {
+                client
+                    .state()
+                    .ecs_world()
+                    .read_storage::<PosComp>()
+                    .get(entity)
+                    .expect("não há nenhum componente de posição na entidade do jogador!")
+                    .0
+            }
+
+            None => Vec3::default()
+        };
+
+        // posição da câmera para coincidir com o jogador
+        self.camera.set_focus_pos(player_pos);
+        
         // computar matrizes de câmera
         let (view_mat, proj_mat, cam_pos) = self.camera.compute_dependents();
 
@@ -188,7 +211,16 @@ impl Scene {
             client.stare().get_time()
         );
 
-        self.test_figure.update_locals(renderer, FigureLocals::default()).unwrap();
+        // calcular matrix de modelo da entidade
+        let model_mat = Mat4::<f32>::translation_3d(player_pos);
+
+        // Mat4::rotation_z(PI - entity.look_dir().x);
+        // Mat4::rotation_x(entity.look_dir().y);
+
+        self.test_figure
+            .update_locals(renderer, FigureLocals::new(model_mat))
+            .unwrap();
+
         self.test_figure.update_skeleton(renderer).unwrap();
     }
 
