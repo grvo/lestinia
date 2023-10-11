@@ -5,10 +5,7 @@ use std::marker::PhantomData;
 use gfx::{
     self,
 
-    traits::{
-        Factory,
-        FactoryExt
-    }
+    traits::Factory
 };
 
 use image::{
@@ -19,7 +16,6 @@ use image::{
 // local
 use super::{
     RenderError,
-    mesh::Mesh,
     Pipeline,
     gfx_backend
 };
