@@ -105,7 +105,7 @@ where
     /// método sem bloqueio retornando um iterator por meio de novas conexões capturadas em [`postbox`]
     pub fn new_connections(
         &mut self
-    ) -> impl Iterator<Item = PostBox<S, R>> {
+    ) -> impl ExacItemIterator<Item = PostBox<S, R>> {
         let mut events = Events::with_capacity(256);
         let mut conns = VecDeque::new();
 
