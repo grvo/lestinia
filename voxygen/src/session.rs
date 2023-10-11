@@ -44,13 +44,15 @@ pub struct SessionState {
 /// representa uma atividade de sessão de jogo
 impl SessionState {
     /// cria um novo `sessionstate`
-    pub fn new(renderer: &mut Renderer) -> Self {
-        Self {
+    pub fn new(renderer: &mut Renderer) -> Result<Self, Error> {
+        let client = Client::new(([127, 0, 0, 1], 59003))?.with_test_state(); // <--- todo: remover isso
+        
+        Ok(Self {
             // cria uma cena para esta sessão
             scene: Scene::new(renderer, &client),
             client,
             key_state: KeyState::new()
-        }
+        })
     }
 }
 
