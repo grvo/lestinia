@@ -90,6 +90,20 @@ impl State {
         }
     }
 
+    /// registrar um componente com o ecs do estado
+    pub fn with_component<T: Component>(mut self) -> Self
+        where <T as Component>::Storage: Default
+    {
+        self.ecs_world.register::<T>();
+
+        self
+    }
+
+    /// deleta uma entidade do ecs do estado, caso exista
+    pub fn delete_entity(&mut self, entity: EcsEntity) {
+        let _ = self.ecs_world.delete_entity(entity);
+    }
+
     // todo: obter rid disso
     pub fn new_test_player(&mut self) -> EcsEntity {
         self.ecs_world
