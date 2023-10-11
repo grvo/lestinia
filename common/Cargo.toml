@@ -2,16 +2,16 @@
 name = "lestinia-common"
 version = "0.1.0"
 authors = [
-  "grivo <notgrivo@gmail.com>",
-  "joshua barretto <joshua.s.barretto@gmail.com>",
-  "maciej cwięka <mckol363@gmail.com>"
+    "grivo <notgrivo@gmail.com>",
+    "joshua barretto <joshua.s.barretto@gmail.com>",
+    "maciej cwięka <mckol363@gmail.com>"
 ]
 edition = "2018"
 
 [dependencies]
 specs = { version = "0.14", features = ["serde"] }
 shred = "0.7"
-vek = "0.9"
+vek = { version = "0.9", features = ["serde"] }
 dot_vox = "1.0"
 threadpool = "1.7"
 mio = "0.6"
