@@ -1,13 +1,10 @@
-// padrão
 use std::time::Duration;
 
-// biblioteca
 use log::info;
 
-// projeto
 use server::{
-    self,
-
+    Input,
+    Event,
     Server
 };
 
@@ -26,11 +23,21 @@ fn main() {
     let mut clock = Clock::new();
 
     // criar servidor
-    let mut server = Server::new();
+    let mut server = Server::new()
+        .expect("falha ao criar instância de servidor");
 
     loop {
-        server.tick(server::Input {}, clock.get_last_delta())
+        let events = server.tick(Input::default(), clock.get_last_delta())
             .expect("falha ao tickar o servidor");
+
+        for event in events {
+            match event {
+                Event::ClientConnected { ecs_entity } => println!("cliente conectado!"),
+                Event::ClientDisconnected { ecs_entity } => println!("cliente desconectado!"),
+
+                Event::Chat { msg, .. } => println!("[chat] {}", msg)
+            }
+        }
 
         // limpar o servidor depois de tick
         server.cleanup();
