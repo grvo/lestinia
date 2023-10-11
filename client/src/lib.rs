@@ -16,9 +16,10 @@ use std::{
 
 use vek::*;
 use threadpool;
+use specs::Builder;
 
 use common::{
-    comp::phys::Vel,
+    comp,
     
     state::State,
     terrain::TerrainChunk,
@@ -115,6 +116,13 @@ impl Client {
         &mut self.state
     }
 
+    /// obtém uma entidade por meio de seu uid, criando um caso ainda não exista
+    pub fn get_or_create_entity(&mut self, uid: u64) -> EcsEntity {
+        self.state.ecs_world_mut().create_entity()
+            .with(comp::Uid(uid))
+            .build()
+    }
+
     /// obtém a entidade player
     #[allow(dead_code)]
     pub fn player(&self) -> Option<EcsEntity> {
@@ -159,7 +167,7 @@ impl Client {
             const PLAYER_VELOCITY: f32 = 100.0;
 
             // todo: determinar aceleração
-            self.state.write_component(p, Vel(Vec3::from(input.move_dir * PLAYER_VELOCITY)));
+            self.state.write_component(p, comp::phys::Vel(Vec3::from(input.move_dir * PLAYER_VELOCITY)));
         }
 
         // tick para o localstate do client (passo 3)
@@ -189,12 +197,22 @@ impl Client {
             self.last_ping = self.state.get_time();
 
             for msg in new_msgs {
-                match msg {
+                match msg {            
+                    ServerMsg::Shutdown => return Err(Error::ServerShutdown),
+
                     ServerMsg::Chat(msg) => frontend_events.push(Event::Chat(msg)),
-                    
-                    ServerMsg::Shutdown => return Err(Error::ServerShutdown)
+
+                    ServerMsg::EntityPhysics { uid, pos, vel, dir } => {
+                        let ecs_entity = self.get_or_create_entity(uid);
+                        
+                        self.state.write_component(ecs_entity, pos);
+                        self.state.write_component(ecs_entity, vel);
+                        self.state.write_component(ecs_entity, dir);
+                    }
                 }
             }
+        } else if let Some(err) = self.postbox.status() {
+            return Err(err.into());
         }
 
         Ok(frontend_events)
