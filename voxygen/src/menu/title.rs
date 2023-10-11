@@ -54,7 +54,7 @@ impl PlayState for TitleState {
 
                     // quando o espaço é pressionado, iniciar uma sessão
                     Event::Char(' ') => return PlayStateResult::Push(
-                        Box::new(SessionState::new(global_state.window.renderer_mut()))
+                        Box::new(SessionState::new(global_state.window.renderer_mut()).unwrap()) // todo: auxiliar esse erro
                     ),
 
                     // ignorar todos os outros eventos
