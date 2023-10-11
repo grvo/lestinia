@@ -93,11 +93,12 @@ impl Scene {
                 renderer, [
                     Some(load_segment("dragonhead.vox").generate_mesh(Vec3::new(2.0, -12.0, 2.0))),
                     Some(load_segment("dragon_body.vox").generate_mesh(Vec3::new(0.0, 0.0, 0.0))),
-                    Some(load_segment("dragon_lfoot.vox").generate_mesh(Vec3::new(10.0, 10.0, -80.0))),
+                    Some(load_segment("dragon_lfoot.vox").generate_mesh(Vec3::new(0.0, 10.0, -4.0))),
                     Some(load_segment("dragon_rfoot.vox").generate_mesh(Vec3::new(0.0, 10.0, -4.0))),
                     Some(load_segment("dragon_rfoot.vox").generate_mesh(Vec3::new(0.0, -10.0, -4.0))),
                     Some(load_segment("dragon_lfoot.vox").generate_mesh(Vec3::new(0.0, 0.0, 0.0))),
 
+                    None,
                     None,
                     None,
                     None,
