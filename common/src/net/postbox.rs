@@ -146,7 +146,7 @@ where
     /// método receptor não-bloqueável retornando um iterator após recber objetos deserializados
     /// # erros
     /// se o outro lado se desconectar do postbox, tentar algo novo para enviar
-    pub fn recv_iter(&mut self) -> impl Iterator<Item = R> {
+    pub fn new_messages(&mut self) -> impl ExacSizeIterator<Item = R> {
         let mut events = Events::with_capacity(4096);
 
         let mut items = VecDeque::new();
