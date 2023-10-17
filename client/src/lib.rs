@@ -16,10 +16,19 @@ use std::{
 
 use vek::*;
 use threadpool;
-use specs::Builder;
+
+use specs::{
+    Builder,
+
+    saveload::MarkerAllocator
+};
 
 use common::{
-    comp,
+    comp::{
+        self,
+
+        Uid
+    },
     
     state::State,
     terrain::TerrainChunk,
@@ -45,7 +54,7 @@ pub struct Client {
 
     tick: u64,
     state: State,
-    player: Option<EcsEntity>,
+    player: Option<Uid>,
 
     // teste
     world: World,
@@ -61,7 +70,7 @@ impl Client {
         let mut postbox = PostBox::to_server(addr)?;
 
         postbox.send(ClientMsg::Chat(String::from("olá, mundo!")));
-        postbox.send(ClientMsg::Chat(String::from("olá, mundo!")));
+        postbox.send(ClientMsg::Chat(String::from("mundo, olá!")));
         
         Ok(Self {
             thread_pool: threadpool::Builder::new()
@@ -93,7 +102,6 @@ impl Client {
     // todo: obtém o rid disso
     pub fn with_test_state(mut self) -> Self {
         self.chunk = Some(self.world.generate_chunk(Vec3::zero()));
-        self.player = Some(self.state.new_test_player());
 
         self
     }
@@ -119,14 +127,31 @@ impl Client {
 
     /// obtém uma entidade por meio de seu uid, criando um caso ainda não exista
     pub fn get_or_create_entity(&mut self, uid: u64) -> EcsEntity {
-        self.state.ecs_world_mut().create_entity()
-            .with(comp::Uid(uid))
-            .build()
+        // encontra a entidade ecs por meio de uid
+        let ecs_entity = self.state().ecs_world()
+            .read_resource::<comp::UidAllocator>()
+            .retrieve_entity_internal(uid.into());
+
+        // retorna a entidade ou cria uma
+        if let Some(ecs_entity) = ecs_entity {
+            ecs_entity
+        } else {
+            let ecs_entity = self.state.ecs_world_mut().create_entity()
+                .build();
+
+            // aloca no uid específico recebido
+            self.state
+                .ecs_world_mut()
+                .write_resource::<comp::UidAllocator>()
+                .allocate(ecs_entity, Some(uid.into()));
+
+            ecs_entity
+        }
     }
 
     /// obtém a entidade player
     #[allow(dead_code)]
-    pub fn player(&self) -> Option<EcsEntity> {
+    pub fn player(&self) -> Option<Uid> {
         self.player
     }
 
@@ -168,7 +193,7 @@ impl Client {
             const PLAYER_VELOCITY: f32 = 100.0;
 
             // todo: determinar aceleração
-            self.state.write_component(p, comp::phys::Vel(Vec3::from(input.move_dir * PLAYER_VELOCITY)));
+            self.state.write_component(ecs_entity, comp::phys::Vel(Vec3::from(input.move_dir * PLAYER_VELOCITY)));
         }
 
         // tick para o localstate do client (passo 3)
@@ -180,7 +205,7 @@ impl Client {
         Ok(frontend_events)
     }
 
-    /// limpar o client depois de um tick
+    /// limpa o client depois de um tick
     #[allow(dead_code)]
     pub fn cleanup(&mut self) {
         // limpar o estado local
@@ -209,6 +234,10 @@ impl Client {
                         self.state.write_component(ecs_entity, pos);
                         self.state.write_component(ecs_entity, vel);
                         self.state.write_component(ecs_entity, dir);
+                    },
+
+                    ServerMsg::EntityDeleted(uid) => {
+                        self.state.delete_entity(uid);
                     }
                 }
             }
