@@ -15,9 +15,19 @@ use std::{
     net::SocketAddr
 };
 
-use specs::Entity as EcsEntity;
+use specs::{
+    Entity as EcsEntity,
+    world::EntityBuilder as EcsEntityBuilder,
+    Builder,
+    join::Join,
+    saveload::MarkedBuilder
+};
+
+use vek::*;
 
 use common::{
+    comp,
+    
     state::State,
     net::PostOffice,
 
@@ -29,7 +39,10 @@ use common::{
 
 use world::World;
 
-use crate::client::Client;
+use crate::client::{
+    Client,
+    Clients
+};
 
 const CLIENT_TIMEOUT: f64 = 5.0; // segundos
 
@@ -53,19 +66,23 @@ pub struct Server {
     world: World,
 
     postoffice: PostOffice<ServerMsg, ClientMsg>,
-    clients: Vec<Client>
+    clients: Clients
 }
 
 impl Server {
     /// cria um novo servidor
     #[allow(dead_code)]
     pub fn new() -> Result<Self, Error> {
+        let mut state = State::new();
+
+        state.ecs_world_mut().add_resource(comp::UidAllocator::new());
+        
         Ok(Self {
-            state: State::new(),
+            state,
             world: World::new(),
 
             postoffice: PostOffice::new(SocketAddr::from(([0; 4], 59003)))?,
-            clients: Vec::new()
+            clients: Clients::empty()
         })
     }
 
@@ -76,6 +93,20 @@ impl Server {
     /// obtém uma referência mutável do estado do jogo do cliente
     #[allow(dead_code)]
     pub fn state_mut(&mut self) -> &mut State { &mut self.state }
+
+    /// constrói uma nova entidade com um uid gerado
+    pub fn build_entity(&mut self) -> EcsEntityBuilder {
+        self.state.ecs_world_mut().create_entity()
+            .marked::<comp::Uid>()
+    }
+
+    /// constrói um novo jogador com um uid gerado
+    pub fn build_player(&mut self) -> EcsEntityBuilder {
+        self.build_entity()
+            .with(comp::phys::Pos(Vec3::zero()))
+            .with(comp::phys::Vel(Vec3::zero()))
+            .with(comp::phys::Dir(Vec3::unit_y()))
+    }
 
     /// obtém uma referência para o mundo do servidor
     #[allow(dead_code)]
@@ -118,6 +149,9 @@ impl Server {
         // tick para o localstate do client (passo 3)
         self.state.tick(dt);
 
+        // sincroniza os clients com o novo estado do mundo
+        self.sync_clients();
+
         // finalizar o tick, passar controle de volta para o frontend (passo 6)
         Ok(frontend_events)
     }
@@ -134,14 +168,14 @@ impl Server {
         let mut frontend_events = Vec::new();
 
         for postbox in self.postoffice.new_connections() {
-            // todo: não utilizar esse método
-            let ecs_entity = self.state.new_test_player();
+            let ecs_entity = self.build_player()
+                .build();
 
             frontend_events.push(Event::ClientConnected {
                 ecs_entity
             });
 
-            self.clients.push(Client {
+            self.clients.add(Client {
                 ecs_entity,
                 postbox,
 
@@ -159,7 +193,7 @@ impl Server {
         let state = &mut self.state;
         let mut new_chat_msgs = Vec::new();
 
-        self.clients.drain_filter(|client| {
+        self.clients.remove_if(|client| {
             let mut disconnected = false;
             let new_msgs = client.postbox.new_messages();
 
@@ -175,8 +209,8 @@ impl Server {
                     }
                 }
             } else if
-                state.get_time() - client.last_ping > CLIENT_TIMEOUT ||
-                client.postbox.status().is_some()
+                state.get_time() - client.last_ping > CLIENT_TIMEOUT || // timeout
+                client.postbox.status().is_some() // erro de postbox
             {
                 disconnected = true;
             }
@@ -196,9 +230,7 @@ impl Server {
 
         // auxiliar novas mensagens do chat
         for (ecs_entity, msg) in new_chat_msgs {
-            for client in &mut self.clients {
-                let _ = client.postbox.send(ServerMsg::Chat(msg.clone()));
-            }
+            self.clients.notify_all(ServerMsg::Chat(msg.clone()));
 
             frontend_events.push(Event::Chat {
                 ecs_entity,
@@ -207,5 +239,24 @@ impl Server {
         }
 
         Ok(frontend_events)
+    }
+
+    /// sincroniza os estados do client com informações atualizadas
+    fn sync_clients(&mut self) {
+        for (&uid, &pos, &vel, &dir) in (
+            &self.state.ecs_world().read_storage::<comp::Uid>(),
+            
+            &self.state.ecs_world().read_storage::<comp::phys::Pos>(),
+            &self.state.ecs_world().read_storage::<comp::phys::Vel>(),
+            &self.state.ecs_world().read_storage::<comp::phys::Dir>()
+        ).join() {
+            self.clients.notify_all(ServerMsg::EntityPhysics {
+                uid: uid.into(),
+                
+                pos,
+                vel,
+                dir
+            });
+        }
     }
 }
