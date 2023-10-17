@@ -1,6 +1,10 @@
 use std::{
 	collections::HashMap,
-	ops::Range
+	ops::Range,
+
+	u64,
+	
+	fmt
 };
 
 use specs::{
@@ -24,6 +28,12 @@ pub struct Uid(pub u64);
 impl Into<u64> for Uid {
 	fn into(self) -> u64 {
 		self.0
+	}
+}
+
+impl fmt::Display for Uid {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "{}", self.0)
 	}
 }
 
