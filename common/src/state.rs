@@ -13,7 +13,12 @@ use specs::{
     DispatcherBuilder,
     
     Entity as EcsEntity,
-    World as EcsWorld
+    World as EcsWorld,
+
+    storage::{
+        Storage as EcsStorage,
+        MaskedStorage as EcsMaskedStorage
+    }
 };
 
 use vek::*;
@@ -116,14 +121,29 @@ impl State {
             .build()
     }
 
-    /// escreve um componente
-    pub fn write_component<C: Component>(&mut self, e: EcsEntity, c: C) {
-        let _ = self.ecs_world.write_storage().insert(e, c);
+    /// escreve um componente atribuído a uma entidade em particular
+    pub fn write_component<C: Component>(&mut self, e: EcsEntity, comp: C) {
+        let _ = self.ecs_world.write_storage().insert(entity, comp);
+    }
+
+    /// lê uma clonagem de um componente atribuído a uma entidade em particular
+    pub fn read_component<C: Component + Clone>(&self, entity: EcsEntity) -> Option<C> {
+        self.ecs_world.read_storage::<C>().get(entity).cloned()
+    }
+
+    /// obtém uma referência (apenas leitura) para o armazenamento de um tipo de componente em particular
+    pub fn read_storage<C: Component>(&self) -> EcsStorage<C, Fetch<EcsMaskedStorage<C>>> {
+        self.ecs_world.read_storage::<C>()
     }
 
     /// obtém uma referência para o mundo ecs interno
     pub fn ecs_world(&self) -> &EcsWorld {
         &self.ecs_world
+    }
+
+    /// obtém uma referência mutável para o mundo ecs interno
+    pub fn ecs_world_mut(&mut self) -> &mut EcsWorld {
+        &mut self.ecs_world
     }
 
     /// obtém uma referência para a estrutura changes
