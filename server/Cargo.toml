@@ -9,3 +9,4 @@ common = { package = "lestinia-common", path = "../common" }
 world = { package = "lestinia-world", path = "../world" }
 
 specs = "0.14"
+vek = "0.9"
