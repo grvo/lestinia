@@ -42,8 +42,6 @@ impl Clients {
 		for client in &mut self.clients {
 			// consumir qualquer erro; acabar com eles
 			let _ = client.postbox.send(msg.clone());
-
-			println!("enviando mensagem...");
 		}
 	}
 
@@ -52,8 +50,6 @@ impl Clients {
 			if client.uid != uid {
 				// consome qualquer erros, tentando resolvê-los depois
 				let _ = client.postbox.send(msg.clone());
-
-				println!("enviando mensagem...");
 			}
 		}
 	}
