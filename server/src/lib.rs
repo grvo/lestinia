@@ -48,15 +48,15 @@ const CLIENT_TIMEOUT: f64 = 5.0; // segundos
 
 pub enum Event {
     ClientConnected {
-        ecs_entity: EcsEntity
+        uid: comp::Uid
     },
 
     ClientDisconnected {
-        ecs_entity: EcsEntity
+        uid: comp::Uid
     },
 
     Chat {
-        ecs_entity: EcsEntity,
+        uid: comp::Uid,
         msg: String
     }
 }
@@ -168,15 +168,15 @@ impl Server {
         let mut frontend_events = Vec::new();
 
         for postbox in self.postoffice.new_connections() {
-            let ecs_entity = self.build_player()
-                .build();
+            let ecs_entity = self.build_player().build();
+            let uid = self.state.read_component(ecs_entity).unwrap();
 
             frontend_events.push(Event::ClientConnected {
-                ecs_entity
+                uid
             });
 
             self.clients.add(Client {
-                ecs_entity,
+                uid,
                 postbox,
 
                 last_ping: self.state.get_time()
@@ -204,7 +204,7 @@ impl Server {
                 // processar mensagens a caminho
                 for msg in new_msgs {
                     match msg {
-                        ClientMsg::Chat(msg) => new_chat_msgs.push((client.ecs_entity, msg)),
+                        ClientMsg::Chat(msg) => new_chat_msgs.push((client.uid, msg)),
                         ClientMsg::Disconnect => disconnected = true
                     }
                 }
@@ -216,10 +216,10 @@ impl Server {
             }
 
             if disconnected {
-                state.delete_entity(client.ecs_entity);
+                state.delete_entity(client.uid);
 
                 frontend_events.push(Event::ClientDisconnected {
-                    ecs_entity: client.ecs_entity
+                    uid: client.uid
                 });
 
                 true
@@ -229,11 +229,11 @@ impl Server {
         });
 
         // auxiliar novas mensagens do chat
-        for (ecs_entity, msg) in new_chat_msgs {
+        for (uid, msg) in new_chat_msgs {
             self.clients.notify_all(ServerMsg::Chat(msg.clone()));
 
             frontend_events.push(Event::Chat {
-                ecs_entity,
+                uid,
                 msg
             });
         }
@@ -250,7 +250,7 @@ impl Server {
             &self.state.ecs_world().read_storage::<comp::phys::Vel>(),
             &self.state.ecs_world().read_storage::<comp::phys::Dir>()
         ).join() {
-            self.clients.notify_all(ServerMsg::EntityPhysics {
+            self.clients.notify_all_except(uid, ServerMsg::EntityPhysics {
                 uid: uid.into(),
                 
                 pos,
