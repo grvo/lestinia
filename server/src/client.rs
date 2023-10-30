@@ -1,6 +1,8 @@
 use specs::Entity as EcsEntity;
 
 use common::{
+	comp,
+	
 	msg::{
 		ServerMsg,
 		ClientMsg
@@ -12,7 +14,7 @@ use common::{
 use crate::Error;
 
 pub struct Client {
-	pub ecs_entity: EcsEntity,
+	pub uid: comp::Uid,
 	pub postbox: PostBox<ServerMsg, ClientMsg>,
 	pub last_ping: f64
 }
@@ -42,6 +44,17 @@ impl Clients {
 			let _ = client.postbox.send(msg.clone());
 
 			println!("enviando mensagem...");
+		}
+	}
+
+	pub fn notify_all_except(&mut self, uid: comp::Uid, msg: ServerMsg) {
+		for client in &mut self.clients {
+			if client.uid != uid {
+				// consome qualquer erros, tentando resolvê-los depois
+				let _ = client.postbox.send(msg.clone());
+
+				println!("enviando mensagem...");
+			}
 		}
 	}
 }
