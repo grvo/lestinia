@@ -103,6 +103,14 @@ impl State {
         self
     }
 
+    /// obtém uma entidade por meio de seu uid, caso exista
+    pub fn get_entity(&self, uid: comp::Uid) -> Option<EcsEntity> {
+        // encontra a entidade ecs por meio de seu uid
+        self.ecs_world
+            .read_resource::<comp::UidAllocator>()
+            .retrieve_entity_internal(uid.into())
+    }
+
     /// deleta uma entidade do ecs do estado, caso exista
     pub fn delete_entity(&mut self, uid: comp::Uid) {
         // encontra a entidade ecs por meio de seu uid
@@ -114,18 +122,6 @@ impl State {
         if let Some(ecs_entity) = ecs_entity {
             let _ = self.ecs_world.delete_entity(ecs_entity);
         }
-    }
-
-    // todo: obter rid disso
-    pub fn new_test_player(&mut self) -> EcsEntity {
-        self.ecs_world
-            .create_entity()
-
-            .with(comp::phys::Pos(Vec3::default()))
-            .with(comp::phys::Vel(Vec3::default()))
-            .with(comp::phys::Dir(Vec3::default()))
-            
-            .build()
     }
 
     /// escreve um componente atribuído a uma entidade em particular
