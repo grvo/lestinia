@@ -10,8 +10,8 @@ use server::{
 
 use common::clock::Clock;
 
-// fps
-const FPS: u64 = 60;
+// tps
+const TPS: u64 = 20;
 
 fn main() {
     // logging inicial
@@ -32,10 +32,10 @@ fn main() {
 
         for event in events {
             match event {
-                Event::ClientConnected { uid } => println!("cliente {} conectado!", uid),
-                Event::ClientDisconnected { uid } => println!("cliente {} desconectado!", uid),
+                Event::ClientConnected { uid } => info!("cliente {} conectado!", uid),
+                Event::ClientDisconnected { uid } => info!("cliente {} desconectado!", uid),
 
-                Event::Chat { uid, msg } => println!("[cliente {}] {}", uid, msg)
+                Event::Chat { uid, msg } => info!("[cliente {}] {}", uid, msg)
             }
         }
 
@@ -43,6 +43,6 @@ fn main() {
         server.cleanup();
 
         // esperar pelo próximo tick
-        clock.tick(Duration::from_millis(1000 / FPS));
+        clock.tick(Duration::from_millis(1000 / TPS));
     }
 }
