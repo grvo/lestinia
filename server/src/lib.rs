@@ -73,12 +73,8 @@ impl Server {
     /// cria um novo servidor
     #[allow(dead_code)]
     pub fn new() -> Result<Self, Error> {
-        let mut state = State::new();
-
-        state.ecs_world_mut().add_resource(comp::UidAllocator::new());
-        
         Ok(Self {
-            state,
+            state: State::new(),
             world: World::new(),
 
             postoffice: PostOffice::new(SocketAddr::from(([0; 4], 59003)))?,
@@ -106,6 +102,10 @@ impl Server {
             .with(comp::phys::Pos(Vec3::zero()))
             .with(comp::phys::Vel(Vec3::zero()))
             .with(comp::phys::Dir(Vec3::unit_y()))
+
+            // quando o jogador é criado primeiramente, forçar a notificação de física para todos
+            // incluindo eles mesmo
+            .with(comp::phys::UpdateKind::Force)
     }
 
     /// obtém uma referência para o mundo do servidor
@@ -167,19 +167,21 @@ impl Server {
     fn handle_new_connections(&mut self) -> Result<Vec<Event>, Error> {
         let mut frontend_events = Vec::new();
 
-        for postbox in self.postoffice.new_connections() {
+        for mut postbox in self.postoffice.new_connections() {
             let ecs_entity = self.build_player().build();
             let uid = self.state.read_component(ecs_entity).unwrap();
 
-            frontend_events.push(Event::ClientConnected {
-                uid
-            });
+            let _ = postbox.send(ServerMsg::SetPlayerEntity(uid));
 
             self.clients.add(Client {
                 uid,
                 postbox,
 
                 last_ping: self.state.get_time()
+            });
+
+            frontend_events.push(Event::ClientConnected {
+                uid
             });
         }
 
@@ -191,7 +193,9 @@ impl Server {
         let mut frontend_events = Vec::new();
 
         let state = &mut self.state;
+        
         let mut new_chat_msgs = Vec::new();
+        let mut disconnected_clients = Vec::new();
 
         self.clients.remove_if(|client| {
             let mut disconnected = false;
@@ -216,12 +220,8 @@ impl Server {
             }
 
             if disconnected {
-                state.delete_entity(client.uid);
-
-                frontend_events.push(Event::ClientDisconnected {
-                    uid: client.uid
-                });
-
+                disconnected_clients.push(client.uid);
+                
                 true
             } else {
                 false
@@ -238,25 +238,46 @@ impl Server {
             });
         }
 
+        // auxiliar desconexões do cliente
+        for uid in disconnected_clients {
+            self.clients.notify_all(ServerMsg::EntityDeleted(uid));
+
+            frontend_events.push(Event::ClientDisconnected {
+                uid
+            });
+
+            state.delete_entity(uid);
+        }
+
         Ok(frontend_events)
     }
 
     /// sincroniza os estados do client com informações atualizadas
     fn sync_clients(&mut self) {
-        for (&uid, &pos, &vel, &dir) in (
+        for (&uid, &pos, &vel, &dir, update_kind) in (
             &self.state.ecs_world().read_storage::<comp::Uid>(),
             
             &self.state.ecs_world().read_storage::<comp::phys::Pos>(),
             &self.state.ecs_world().read_storage::<comp::phys::Vel>(),
-            &self.state.ecs_world().read_storage::<comp::phys::Dir>()
+            &self.state.ecs_world().read_storage::<comp::phys::Dir>(),
+
+            &mut self.state.ecs_world().write_storage::<comp::phys::UpdateKind>()
         ).join() {
-            self.clients.notify_all_except(uid, ServerMsg::EntityPhysics {
-                uid: uid.into(),
-                
+            let msg = ServerMsg::EntityPhysics {
+                uid,
                 pos,
                 vel,
                 dir
-            });
+            };
+
+            // algumas vezes é necessário forçar atualização
+            match update_kind {
+                comp::phys::UpdateKind::Force => self.clients.notify_all(msg),
+                comp::phys::UpdateKind::Passive => self.clients.notify_all_except(uid, msg)
+            }
+
+            // com a atualização ocorrida, padrão é uma atualização passiva
+            *update_kind = comp::phys::UpdateKind::Passive;
         }
     }
 }
