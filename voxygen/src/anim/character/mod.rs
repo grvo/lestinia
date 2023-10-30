@@ -16,11 +16,11 @@ pub struct CharacterSkeleton {
     head: Bone,
     chest: Bone,
 
-    bl_foot: Bone,
-    br_foot: Bone,
-    
-    r_hand: Bone,
+    belt: Bone,
+    shorts: Bone,
+
     l_hand: Bone,
+    r_hand: Bone,
     
     l_foot: Bone,
     r_foot: Bone,
@@ -34,8 +34,8 @@ impl CharacterSkeleton {
             head: Bone::default(),
             chest: Bone::default(),
 
-            br_foot: Bone::default(),
-            bl_foot: Bone::default(),
+            belt: Bone::default(),
+            shorts: Bone::default(),
             
             l_hand: Bone::default(),
             r_hand: Bone::default(),
@@ -56,9 +56,9 @@ impl Skeleton for CharacterSkeleton {
             FigureBoneData::new(self.head.compute_base_matrix()),
             FigureBoneData::new(chest_mat),
 
-            FigureBoneData::new(self.bl_foot.compute_base_matrix()),
-            FigureBoneData::new(self.br_foot.compute_base_matrix()),
-            
+            FigureBoneData::new(self.belt.compute_base_matrix()),
+            FigureBoneData::new(self.shorts.compute_base_matrix()),
+
             FigureBoneData::new(self.l_hand.compute_base_matrix()),
             FigureBoneData::new(self.r_hand.compute_base_matrix()),
             
