@@ -1,7 +1,5 @@
-// padrão
 use std::time::Duration;
 
-// biblioteca
 use shred::{
     Fetch,
     FetchMut
@@ -18,13 +16,14 @@ use specs::{
     storage::{
         Storage as EcsStorage,
         MaskedStorage as EcsMaskedStorage
-    }
+    },
+
+    saveload::MarkerAllocator
 };
 
 use vek::*;
 
-// caixote
-use Crate::{
+use crate::{
     comp,
     sys,
 
@@ -105,8 +104,16 @@ impl State {
     }
 
     /// deleta uma entidade do ecs do estado, caso exista
-    pub fn delete_entity(&mut self, entity: EcsEntity) {
-        let _ = self.ecs_world.delete_entity(entity);
+    pub fn delete_entity(&mut self, uid: comp::Uid) {
+        // encontra a entidade ecs por meio de seu uid
+        let ecs_entity = self.ecs_world
+            .read_resource::<comp::UidAllocator>()
+            .retrieve_entity_internal(uid.into());
+
+        // deleta a entidade ecs, caso ela exista
+        if let Some(ecs_entity) = ecs_entity {
+            let _ = self.ecs_world.delete_entity(ecs_entity);
+        }
     }
 
     // todo: obter rid disso
