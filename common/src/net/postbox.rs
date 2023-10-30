@@ -11,7 +11,9 @@ use std::{
     net::SocketAddr,
     time::Duration,
 
-    thread
+    thread,
+
+    sync::mpsc::TryRecvError
 };
 
 // exeterno
@@ -154,21 +156,15 @@ where
         // se ocorrer um erro, ou caso tenha ocorrido antes, deixar pra lá
         if let Some(_) = self.err {
             return items.into_iter();
-        } else if let Err(err) = self.poll.poll(&mut events, Some(Duration::new(0, 0))) {
-            self.err = Some(err.into());
-
-            return items.into_iter();
         }
 
-        for event in events {
-            match event.token() {
-                DATA_TOKEN => match self.recv.try_recv() {
-                    Ok(Ok(item)) => items.push_back(item),
-                    Err(err) => self.err = Some(err.into()),
-                    Ok(Err(err)) => self.err = Some(err.into())
-                },
-
-                _ => ()
+        loop {
+            match self.recv.try_recv() {
+                Ok(Ok(item)) => items.push_back(item),
+                Ok(Err(err)) => self.err = Some(err.into()),
+                
+                Err(TryRecvError::Empty) => break,
+                Err(err) => self.err = Some(err.into())
             }
         }
 
@@ -263,9 +259,9 @@ fn postbox_thread<S, R>(
                     .collect::<Vec<u8>>()
                     .as_slice()
                 ) {
-                    Ok(ok) => {
+                    Ok(msg) => {
                         recv_tx
-                            .send(Ok(ok))
+                            .send(Ok(msg))
                             .unwrap();
 
                         recv_nextlen = 0;
