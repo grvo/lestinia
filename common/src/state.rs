@@ -129,11 +129,6 @@ impl State {
         let _ = self.ecs_world.write_storage().insert(entity, comp);
     }
 
-    /// lê uma clonagem de um componente atribuído a uma entidade em particular
-    pub fn read_component<C: Component + Clone>(&self, entity: EcsEntity) -> Option<C> {
-        self.ecs_world.read_storage::<C>().get(entity).cloned()
-    }
-
     /// obtém uma referência (apenas leitura) para o armazenamento de um tipo de componente em particular
     pub fn read_storage<C: Component>(&self) -> EcsStorage<C, Fetch<EcsMaskedStorage<C>>> {
         self.ecs_world.read_storage::<C>()
