@@ -1,3 +1,5 @@
+#![feature(label_break_value)]
+
 pub mod error;
 pub mod input;
 
@@ -41,6 +43,8 @@ use common::{
 };
 
 use world::World;
+
+const SERVER_TIMEOUT: f64 = 5.0; // segundos
 
 pub enum Event {
     Chat(String)
@@ -126,7 +130,7 @@ impl Client {
     }
 
     /// obtém uma entidade por meio de seu uid, criando um caso ainda não exista
-    pub fn get_or_create_entity(&mut self, uid: u64) -> EcsEntity {
+    pub fn get_or_create_entity_from_uid(&mut self, uid: u64) -> EcsEntity {
         // encontra a entidade ecs por meio de uid
         let ecs_entity = self.state().ecs_world()
             .read_resource::<comp::UidAllocator>()
@@ -151,7 +155,7 @@ impl Client {
 
     /// obtém a entidade player
     #[allow(dead_code)]
-    pub fn player(&self) -> Option<Uid> {
+    pub fn player(&self) -> Option<EcsEntity> {
         self.player
     }
 
@@ -163,8 +167,8 @@ impl Client {
 
     /// envia uma mensagem do chat para o servidor
     #[allow(dead_code)]
-    pub fn send_chat(&mut self, msg: String) -> Result<(), Error> {
-        Ok(self.postbox.send(ClientMsg::Chat(msg))?)
+    pub fn send_chat(&mut self, msg: String) {
+        self.postbox.send(ClientMsg::Chat(msg))
     }
 
     /// executar tick de cliente único, ajudar input e atualizar estado do jogo pela duração recebida
@@ -188,7 +192,7 @@ impl Client {
         frontend_events.append(&mut self.handle_new_messages()?);
 
         // passo 3
-        if let Some(p) = self.player {
+        if let Some(ecs_entity) = self.player {
             // todo: remover isso
             const PLAYER_VELOCITY: f32 = 100.0;
 
@@ -198,6 +202,23 @@ impl Client {
 
         // tick para o localstate do client (passo 3)
         self.state.tick(dt);
+
+        // atualizar o servidor por conta dos atributos físicos do jogador
+        if let Some(ecs_entity) = self.player {
+            match (
+                self.state.read_storage().get(ecs_entity).cloned(),
+                self.state.read_storage().get(ecs_entity).cloned(),
+                self.state.read_storage().get(ecs_entity).cloned()
+            ) {
+                (Some(pos), Some(vel), Some(dir)) => {
+                    self.postbox.send(ClientMsg::PlayerPhysics {
+                        pos, vel, dir
+                    });
+                },
+
+                _ => {}
+            }
+        }
 
         // finalizar o tick, passar controle de volta para o frontend (passo 6)
         self.tick += 1;
@@ -226,10 +247,23 @@ impl Client {
                 match msg {            
                     ServerMsg::Shutdown => return Err(Error::ServerShutdown),
 
+                    ServerMsg::Ping => self.postbox.send(ClientMsg::Pong),
+                    ServerMsg::Pong => {},
+
                     ServerMsg::Chat(msg) => frontend_events.push(Event::Chat(msg)),
 
+                    ServerMsg::SetPlayerEntity(uid) => {
+                        println!("ent!");
+
+                        let ecs_entity = self.get_or_create_entity_from_uid(uid);
+
+                        self.player = Some(ecs_entity);
+                    },
+
                     ServerMsg::EntityPhysics { uid, pos, vel, dir } => {
-                        let ecs_entity = self.get_or_create_entity(uid);
+                        println!("phys!");
+                        
+                        let ecs_entity = self.get_or_create_entity_from_uid(uid);
                         
                         self.state.write_component(ecs_entity, pos);
                         self.state.write_component(ecs_entity, vel);
@@ -243,6 +277,10 @@ impl Client {
             }
         } else if let Some(err) = self.postbox.status() {
             return Err(err.into());
+        } else if self.state.get_time() - self.last_ping > SERVER_TIMEOUT * 0.5 {
+            self.postbox.send(ClientMsg::Ping);
+        } else if self.state.get_time() - self.last_ping > SERVER_TIMEOUT {
+            return Err(Error::ServerTimeout);
         }
 
         Ok(frontend_events)
@@ -251,6 +289,6 @@ impl Client {
 
 impl Drop for Client {
     fn drop(&mut self) {
-        self.postbox.send(ClientMsg::Disconnect).unwrap();
+        self.postbox.send(ClientMsg::Disconnect);
     }
 }
