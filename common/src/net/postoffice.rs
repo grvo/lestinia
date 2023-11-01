@@ -5,7 +5,9 @@ use std::{
     collections::VecDeque,
     net::SocketAddr,
 
-    thread
+    thread,
+
+	sync::mpsc::TryRecvError
 };
 
 // externo
@@ -120,12 +122,14 @@ where
 
         for event in events {
             match event.token() {
-                // ignorar erro recv
-                DATA_TOKEN => match self.recv.try_recv() {
-                    Ok(Ok(conn)) => conns.push_back(conn),
-                    
-                    Err(err) => self.err = Some(err.into()),
-                    Ok(Err(err)) => self.err = Some(err.into())
+                DATA_TOKEN => loop {
+					match self.recv.try_recv() {
+                    	Ok(Ok(conn)) => conns.push_back(conn),
+                    	Err(TryRecvError::Empty) => break,
+						
+                    	Err(err) => self.err = Some(err.into()),
+                    	Ok(Err(err)) => self.err = Some(err.into())
+					}
                 },
 
                 _ => ()
