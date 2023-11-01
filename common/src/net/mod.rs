@@ -1,6 +1,7 @@
 pub mod data;
 pub mod error;
 
+pub mod post;
 pub mod postbox;
 pub mod postoffice;
 
@@ -13,10 +14,12 @@ pub use self::{
         ServerMsg
     },
 
-    error::PostError,
+    post::{
+        Error as PostError,
 
-    postbox::PostBox,
-    postoffice::PostOffice
+        PostBox,
+        PostOffice
+    }
 };
 
 pub trait PostSend = 'static + serde::Serialize + std::marker::Send + std::fmt::Debug;
