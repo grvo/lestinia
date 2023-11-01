@@ -32,10 +32,10 @@ fn main() {
 
         for event in events {
             match event {
-                Event::ClientConnected { uid } => info!("cliente {} conectado!", uid),
-                Event::ClientDisconnected { uid } => info!("cliente {} desconectado!", uid),
+                Event::ClientConnected { ecs_entity } => println!("cliente {} conectado!", uid),
+                Event::ClientDisconnected { ecs_entity } => println!("cliente {} desconectado!", uid),
 
-                Event::Chat { uid, msg } => info!("[cliente {}] {}", uid, msg)
+                Event::Chat { ecs_entity, msg } => println!("[cliente {}] {}", uid, msg)
             }
         }
 
