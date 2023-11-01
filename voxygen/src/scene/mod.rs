@@ -2,15 +2,17 @@ pub mod camera;
 pub mod figure;
 pub mod terrain;
 
-// biblioteca
 use vek::*;
 use dot_vox;
 
-// projeto
-use common::figure::Segment;
+use common::{
+    comp,
+
+    figure::Segment
+};
+
 use client::Client;
 
-// caixote
 use crate::{
     render::{
         Consts,
@@ -37,7 +39,6 @@ use crate::{
     }
 };
 
-// local
 use self::{
     camera::Camera,
     figure::Figure,
@@ -91,12 +92,15 @@ impl Scene {
 
             test_figure: Figure::new(
                 renderer, [
-                    Some(load_segment("dragonhead.vox").generate_mesh(Vec3::new(2.0, -12.0, 2.0))),
-                    Some(load_segment("dragon_body.vox").generate_mesh(Vec3::new(0.0, 0.0, 0.0))),
-                    Some(load_segment("dragon_lfoot.vox").generate_mesh(Vec3::new(0.0, 10.0, -4.0))),
-                    Some(load_segment("dragon_rfoot.vox").generate_mesh(Vec3::new(0.0, 10.0, -4.0))),
-                    Some(load_segment("dragon_rfoot.vox").generate_mesh(Vec3::new(0.0, -10.0, -4.0))),
-                    Some(load_segment("dragon_lfoot.vox").generate_mesh(Vec3::new(0.0, 0.0, 0.0))),
+                    Some(load_segment("head.vox").generate_mesh(Vec3::new(-7.0, -5.5, -1.0))),
+                    Some(load_segment("chest.vox").generate_mesh(Vec3::new(-6.0, -3.0, 0.0))),
+                    Some(load_segment("belt.vox").generate_mesh(Vec3::new(-5.0, -3.0, 0.0))),
+                    Some(load_segment("pants.vox").generate_mesh(Vec3::new(-5.0, -3.0, 0.0))),
+                    Some(load_segment("hand.vox").generate_mesh(Vec3::new(-2.0, -2.0, -1.0))),
+                    Some(load_segment("hand.vox").generate_mesh(Vec3::new(-2.0, -2.0, -1.0))),
+                    Some(load_segment("foot.vox").generate_mesh(Vec3::new(-2.5, -3.0, -2.0))),
+                    Some(load_segment("foot.vox").generate_mesh(Vec3::new(-2.5, -3.0, -2.0))),
+                    Some(load_segment("sword.vox").generate_mesh(Vec3::new(-6.5, -1.0, 0.0))),
 
                     None,
                     None,
@@ -157,7 +161,25 @@ impl Scene {
     }
 
     /// mantém e atualiza dados da gpu como buffers constantes, modelos, etc.
-    pub fn maintain(&mut self, renderer: &mut Renderer, client: &Client) {    
+    pub fn maintain(&mut self, renderer: &mut Renderer, client: &Client) {
+        // obtém posição do jogador
+        let player_pos = match client.player().and_then(|uid| client.state().get_entity(uid)) {
+            Some(ecs_entity) => {
+                client
+                    .state()
+                    .ecs_world()
+                    .read_storage::<comp::phys::Pos>()
+                    .get(ecs_entity)
+                    .expect("não há componente de posição na entidade do jogador!")
+                    .0
+            }
+
+            None => Vec3::default()
+        };
+
+        // posição da câmera para ser a mesma do jogador
+        self.camera.set_focus_pos(player_pos);
+        
         // computar matrizes de câmera
         let (view_mat, proj_mat, cam_pos) = self.camera.compute_dependents();
 
@@ -186,7 +208,10 @@ impl Scene {
             client.stare().get_time()
         );
 
-        self.test_figure.update_locals(renderer, FigureLocals::default()).unwrap();
+        // calcular matrix de modelo de jogador
+        let model_mat = Mat4::<f32>::translation_3d(player_pos);
+
+        self.test_figure.update_locals(renderer, FigureLocals::new(model_mat)).unwrap();
         self.test_figure.update_skeleton(renderer).unwrap();
     }
 
