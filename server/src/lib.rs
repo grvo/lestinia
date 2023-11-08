@@ -48,15 +48,15 @@ const CLIENT_TIMEOUT: f64 = 5.0; // segundos
 
 pub enum Event {
     ClientConnected {
-        uid: comp::Uid
+        ecs_entity: EcsEntity
     },
 
     ClientDisconnected {
-        uid: comp::Uid
+        ecs_entity: EcsEntity
     },
 
     Chat {
-        uid: comp::Uid,
+        ecs_entity: EcsEntity,
         msg: String
     }
 }
@@ -77,7 +77,7 @@ impl Server {
             state: State::new(),
             world: World::new(),
 
-            postoffice: PostOffice::new(SocketAddr::from(([0; 4], 59003)))?,
+            postoffice: PostOffice::bind(SocketAddr::from(([0; 4], 59003)))?,
             clients: Clients::empty()
         })
     }
@@ -102,10 +102,7 @@ impl Server {
             .with(comp::phys::Pos(Vec3::zero()))
             .with(comp::phys::Vel(Vec3::zero()))
             .with(comp::phys::Dir(Vec3::unit_y()))
-
-            // quando o jogador é criado primeiramente, forçar a notificação de física para todos
-            // incluindo eles mesmo
-            .with(comp::phys::UpdateKind::Force)
+            .with(comp::phys::UpdateKind::Passive)
     }
 
     /// obtém uma referência para o mundo do servidor
@@ -136,7 +133,7 @@ impl Server {
         let mut frontend_events = Vec::new();
 
         // se estiver tendo problemas com networking, auxiliar eles
-        if let Some(err) = self.postoffice.status() {
+        if let Some(err) = self.postoffice.error() {
             return Err(err.into());
         }
 
@@ -168,20 +165,25 @@ impl Server {
         let mut frontend_events = Vec::new();
 
         for mut postbox in self.postoffice.new_connections() {
-            let ecs_entity = self.build_player().build();
-            let uid = self.state.read_component(ecs_entity).unwrap();
-
-            let _ = postbox.send(ServerMsg::SetPlayerEntity(uid));
+            let ecs_entity = self.build_player()
+                // quando o jogador for criado primeiramente, forçar notificação de física para todos
+                // incluindo eles mesmos
+                .with(comp::phys::UpdateKind::Force)
+                .build();
+            
+            let uid = self.state.read_storage().get(ecs_entity).cloned().unwrap();
+            
+            postbox.send(ServerMsg::SetPlayerEntity(uid));
 
             self.clients.add(Client {
-                uid,
+                ecs_entity,
                 postbox,
 
                 last_ping: self.state.get_time()
             });
 
             frontend_events.push(Event::ClientConnected {
-                uid
+                ecs_entity
             });
         }
 
@@ -208,19 +210,29 @@ impl Server {
                 // processar mensagens a caminho
                 for msg in new_msgs {
                     match msg {
-                        ClientMsg::Chat(msg) => new_chat_msgs.push((client.uid, msg)),
+                        ClientMsg::Ping => client.postbox.send(ServerMsg::Pong),
+                        ClientMsg::Pong => {},
+
+                        ClientMsg::Chat(msg) => new_chat_msgs.push((client.ecs_entity, msg)),
+
+                        ClientMsg::PlayerPhysics { pos, vel, dir } => {
+                            state.write_component(client.ecs_entity, pos);
+                            state.write_component(client.ecs_entity, vel;
+                            state.write_component(client.ecs_entity, dir);
+                        },
+
                         ClientMsg::Disconnect => disconnected = true
                     }
                 }
             } else if
                 state.get_time() - client.last_ping > CLIENT_TIMEOUT || // timeout
-                client.postbox.status().is_some() // erro de postbox
+                client.postbox.error().is_some() // erro de postbox
             {
                 disconnected = true;
             }
 
             if disconnected {
-                disconnected_clients.push(client.uid);
+                disconnected_clients.push(client.ecs_entity);
                 
                 true
             } else {
@@ -229,24 +241,24 @@ impl Server {
         });
 
         // auxiliar novas mensagens do chat
-        for (uid, msg) in new_chat_msgs {
+        for (ecs_entity, msg) in new_chat_msgs {
             self.clients.notify_all(ServerMsg::Chat(msg.clone()));
 
             frontend_events.push(Event::Chat {
-                uid,
+                ecs_entity,
                 msg
             });
         }
 
         // auxiliar desconexões do cliente
-        for uid in disconnected_clients {
-            self.clients.notify_all(ServerMsg::EntityDeleted(uid));
+        for ecs_entity in disconnected_clients {
+            self.clients.notify_all(ServerMsg::EntityDeleted(state.read_storage().get(ecs_entity).cloned().unwrap()));
 
             frontend_events.push(Event::ClientDisconnected {
-                uid
+                ecs_entity
             });
 
-            state.delete_entity(uid);
+            state.ecs_world_mut().delete_entity(ecs_entity);
         }
 
         Ok(frontend_events)
@@ -254,9 +266,10 @@ impl Server {
 
     /// sincroniza os estados do client com informações atualizadas
     fn sync_clients(&mut self) {
-        for (&uid, &pos, &vel, &dir, update_kind) in (
-            &self.state.ecs_world().read_storage::<comp::Uid>(),
+        for (entity, &uid, &pos, &vel, &dir, update_kind) in (
+            &self.state.esc_world().entities(),
             
+            &self.state.ecs_world().read_storage::<comp::Uid>(),
             &self.state.ecs_world().read_storage::<comp::phys::Pos>(),
             &self.state.ecs_world().read_storage::<comp::phys::Vel>(),
             &self.state.ecs_world().read_storage::<comp::phys::Dir>(),
@@ -273,11 +286,17 @@ impl Server {
             // algumas vezes é necessário forçar atualização
             match update_kind {
                 comp::phys::UpdateKind::Force => self.clients.notify_all(msg),
-                comp::phys::UpdateKind::Passive => self.clients.notify_all_except(uid, msg)
+                comp::phys::UpdateKind::Passive => self.clients.notify_all_except(entity, msg)
             }
 
             // com a atualização ocorrida, padrão é uma atualização passiva
             *update_kind = comp::phys::UpdateKind::Passive;
         }
+    }
+}
+
+impl Drop for Server {
+    fn drop(&mut self) {
+        self.clients.notify_all(ServerMsg::Shutdown)
     }
 }
