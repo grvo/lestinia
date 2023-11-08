@@ -253,16 +253,12 @@ impl Client {
                     ServerMsg::Chat(msg) => frontend_events.push(Event::Chat(msg)),
 
                     ServerMsg::SetPlayerEntity(uid) => {
-                        println!("ent!");
-
                         let ecs_entity = self.get_or_create_entity_from_uid(uid);
 
                         self.player = Some(ecs_entity);
                     },
 
                     ServerMsg::EntityPhysics { uid, pos, vel, dir } => {
-                        println!("phys!");
-                        
                         let ecs_entity = self.get_or_create_entity_from_uid(uid);
                         
                         self.state.write_component(ecs_entity, pos);
