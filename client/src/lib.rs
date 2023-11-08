@@ -19,18 +19,10 @@ use std::{
 use vek::*;
 use threadpool;
 
-use specs::{
-    Builder,
-
-    saveload::MarkerAllocator
-};
+use specs::Builder;
 
 use common::{
-    comp::{
-        self,
-
-        Uid
-    },
+    comp,
     
     state::State,
     terrain::TerrainChunk,
@@ -253,13 +245,17 @@ impl Client {
                     ServerMsg::Chat(msg) => frontend_events.push(Event::Chat(msg)),
 
                     ServerMsg::SetPlayerEntity(uid) => {
-                        let ecs_entity = self.get_or_create_entity_from_uid(uid);
+                        let ecs_entity = self.state
+                            .get_entity(uid)
+                            .unwrap_or_else(|| self.state.build_uid_entity_with_uid(uid).build());
 
                         self.player = Some(ecs_entity);
                     },
 
                     ServerMsg::EntityPhysics { uid, pos, vel, dir } => {
-                        let ecs_entity = self.get_or_create_entity_from_uid(uid);
+                        let ecs_entity = self.state
+                            .get_entity(uid)
+                            .unwrap_or_else(|| self.state.build_uid_entity_with_uid(uid).build());
                         
                         self.state.write_component(ecs_entity, pos);
                         self.state.write_component(ecs_entity, vel);
