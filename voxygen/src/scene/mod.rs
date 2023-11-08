@@ -163,19 +163,18 @@ impl Scene {
     /// mantém e atualiza dados da gpu como buffers constantes, modelos, etc.
     pub fn maintain(&mut self, renderer: &mut Renderer, client: &Client) {
         // obtém posição do jogador
-        let player_pos = match client.player().and_then(|uid| client.state().get_entity(uid)) {
-            Some(ecs_entity) => {
-                client
-                    .state()
-                    .ecs_world()
-                    .read_storage::<comp::phys::Pos>()
-                    .get(ecs_entity)
-                    .expect("não há componente de posição na entidade do jogador!")
-                    .0
-            }
-
-            None => Vec3::default()
-        };
+        let player_pos = client
+            .player()
+            
+            .and_then(|ent| client
+                .state()
+                .ecs_world()
+                .read_storage::<comp::phys::Pos>()
+                .get(ent)
+                .map(|pos| pos.0)
+            )
+            
+            .unwrap_or(Vec3::zero());
 
         // posição da câmera para ser a mesma do jogador
         self.camera.set_focus_pos(player_pos);
