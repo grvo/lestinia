@@ -64,9 +64,6 @@ impl Client {
     pub fn new<A: Into<SocketAddr>>(addr: A) -> Result<Self, Error> {
         let state = State::new();
         let mut postbox = PostBox::to_server(addr)?;
-
-        postbox.send(ClientMsg::Chat(String::from("olá, mundo!")));
-        postbox.send(ClientMsg::Chat(String::from("mundo, olá!")));
         
         Ok(Self {
             thread_pool: threadpool::Builder::new()
