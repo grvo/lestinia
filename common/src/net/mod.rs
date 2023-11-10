@@ -5,8 +5,6 @@ pub mod post;
 pub mod postbox;
 pub mod postoffice;
 
-mod test;
-
 // re-exportações
 pub use self::{
     data::{
