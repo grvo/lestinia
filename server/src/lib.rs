@@ -90,15 +90,9 @@ impl Server {
     #[allow(dead_code)]
     pub fn state_mut(&mut self) -> &mut State { &mut self.state }
 
-    /// constrói uma nova entidade com um uid gerado
-    pub fn build_entity(&mut self) -> EcsEntityBuilder {
-        self.state.ecs_world_mut().create_entity()
-            .marked::<comp::Uid>()
-    }
-
     /// constrói um novo jogador com um uid gerado
     pub fn build_player(&mut self) -> EcsEntityBuilder {
-        self.build_entity()
+        self.state.build_uid_entity()
             .with(comp::phys::Pos(Vec3::zero()))
             .with(comp::phys::Vel(Vec3::zero()))
             .with(comp::phys::Dir(Vec3::unit_y()))
