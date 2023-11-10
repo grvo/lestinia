@@ -11,7 +11,7 @@ use server::{
 use common::clock::Clock;
 
 // tps
-const TPS: u64 = 20;
+const TPS: u64 = 30;
 
 fn main() {
     // logging inicial
