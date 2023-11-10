@@ -94,6 +94,7 @@ impl<S: Skeleton> Figure<S> {
     }
 }
 
+/*
 #[derive(Copy, Clone, Debug)]
 pub struct Figure<S: Skeleton> {
 	bone_consts: Consts<FigureBoneData>,
@@ -104,3 +105,4 @@ pub struct Figure<S: Skeleton> {
 impl<S: Skeleton> Component for Figure<S> {
 	type Storage = VecStorage<Self>;
 }
+*/
