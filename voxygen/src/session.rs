@@ -26,11 +26,15 @@ use crate::{
     window::{
         Event,
 
-        Key
+        Key,
+
+		Window
     },
     
     render::Renderer,
-    scene::Scene
+    scene::Scene,
+
+	ui::test::TestUi
 };
 
 const FPS: u64 = 60;
@@ -38,20 +42,24 @@ const FPS: u64 = 60;
 pub struct SessionState {
     scene: Scene,
     client: Client,
-    key_state: KeyState
+    key_state: KeyState,
+
+	// todo: remover isso
+	test_ui: TestUi
 }
 
 /// representa uma atividade de sessão de jogo
 impl SessionState {
     /// cria um novo `sessionstate`
-    pub fn new(renderer: &mut Renderer) -> Result<Self, Error> {
+    pub fn new(window: &mut Window) -> Result<Self, Error> {
         let client = Client::new(([127, 0, 0, 1], 59003))?.with_test_state(); // <--- todo: remover isso
         
         Ok(Self {
             // cria uma cena para esta sessão
-            scene: Scene::new(renderer, &client),
+            scene: Scene::new(window.renderer_mut(), &client),
             client,
-            key_state: KeyState::new()
+            key_state: KeyState::new(),
+			test_ui: TestUi::new(window)
         })
     }
 }
@@ -92,6 +100,9 @@ impl SessionState {
 
         // renderizar a tela utilizando renderizador global
         self.scene.render_to(renderer);
+
+		// desenhar a ui para a tela
+		self.test_ui.render(renderer);
 
         // finalizar o frame
         renderer.flush();
@@ -142,6 +153,11 @@ impl PlayState for SessionState {
                     Event::KeyUp(Key::MoveLeft) => self.key_state.left = false,
                     Event::KeyUp(Key::MoveRight) => self.key_state.right = false,
 
+					// passar eventos para ui
+					Event::UiEvent(input) => {
+						self.test_ui.handle_event(input);
+					}
+
                     // passar todos os outros eventos para a cena
                     event => {
                         self.scene.handle_input_event(event);
@@ -157,6 +173,9 @@ impl PlayState for SessionState {
 
             // mantém a cena
             self.scene.maintain(global_state.window.renderer_mut(), &self.client);
+
+			// mantém a ui
+			self.test_ui.maintain(global_state.window.renderer_mut());
 
             // renderiza a sessão
             self.render(global_state.window.renderer_mut());
