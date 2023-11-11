@@ -2,60 +2,35 @@
 use vek::*;
 use image;
 
-// conrod
-use conrod_core::widget::image::Image as ImageWidget;
-
-use conrod_core::{
-	Positionable,
-	Sizeable,
-
-	Widget
-};
-
 // caixote
 use crate::{
     PlayState,
     PlayStateResult,
     
     GlobalState,
-    window::Event,
-    session::SessionState,
 
-    render::{
-		Consts,
-		UiLocals,
-		Renderer
+	window::{
+		Event,
+		Window
 	},
 
-	ui::{
-		Ui
-	}
+	session::SessionState,
+
+	ui::title::TitleUi
 };
 
 pub struct TitleState {
-    ui: Ui
+    title_ui: TitleUi
 }
 
 impl TitleState {
     /// cria um novo `titlestate`
 	
-    pub fn new(renderer: &mut Renderer) -> Self {
-        let mut ui = Ui::new(renderer, [500.0, 500.0]).unwrap();
-		let widget_id = ui.new_widget();
-		let image = image::open(concat!(env!("CARGO_MANIFEST_DIR"), "/test_assets/test.png")).unwrap();
-		let title_img = ui.new_image(renderer, &image).unwrap();
-
-		ui.set_widgets(|ui_cell| {
-			ImageWidget::new(title_img)
-				.x_y(0.0, 0.0)
-				.w_h(500.0, 500.0)
-				.set(widget_id, ui_cell);
-		});
-
-        Self {
-            ui
-        }
-    }
+    pub fn new(window: &mut window) -> Self {
+		Self {
+			title_ui: TitleUi::new(window)
+		}
+	}
 }
 
 // a cor do background
@@ -71,8 +46,13 @@ impl PlayState for TitleState {
 
                     // quando o espaço é pressionado, iniciar uma sessão
                     Event::Char(' ') => return PlayStateResult::Push(
-                        Box::new(SessionState::new(global_state.window.renderer_mut()).unwrap()) // todo: auxiliar esse erro
+                        Box::new(SessionState::new(&mut global_state.window).unwrap()) // todo: auxiliar esse erro
                     ),
+
+					// passar eventos para ui
+					Event::UiEvent(input) => {
+						self.title_ui.handle_event(input);
+					}
 
                     // ignorar todos os outros eventos
                     _ => {}
@@ -82,10 +62,10 @@ impl PlayState for TitleState {
 			global_state.window.renderer_mut().clear(BG_COLOR);
 
             // mantém a ui
-            // self.ui.maintain(global_state.window.renderer_mut());
+            self.title_ui.maintain(global_state.window.renderer_mut());
 
             // desenha a ui na tela
-			self.ui.render(global_state.window.renderer_mut());
+			self.title_ui.render(global_state.window.renderer_mut());
 
 			// finalizar o frame
 			global_state.window.renderer_mut().flush();
