@@ -74,7 +74,9 @@ fn main() {
     };
 
     // configura o estado de play inicial
-    let mut states: Vec<Box<dyn PlayState>> = vec![Box::new(TitleState::new())];
+    let mut states: Vec<Box<dyn PlayState>> = vec![Box::new(TitleState::new(
+		&mut global_state.window
+	))];
 
     states.last().map(|current_state| {
         log::info!("jogo iniciado com o estado '{}'", current_state.name())
