@@ -94,8 +94,15 @@ impl Window {
         
         let mut events = vec![];
 
-        self.events_loop.poll_events(|event| match event {
-            glutin::Event::WindowEvent { event, .. } => match event {
+        self.events_loop.poll_events(|event| match {
+			// captura de eventos para testes de ui
+			if let Some(event) = conrod_winit::convert_event(event.clone(), window.window()) {
+				events.push(Event::UiEvent(event));
+			}
+			
+			event
+		} {  
+			glutin::Event::WindowEvent { event, .. } => match event {
                 glutin::WindowEvent::CloseRequested => events.push(Event::Close),
 
                 glutin::WindowEvent::Resized(glutin::dpi::LogicalSize {
@@ -170,6 +177,10 @@ impl Window {
         self.window.grab_cursor(grab)
             .expect("falha ao capturar ou deixar de capturar o cursor");
     }
+
+	pub fn logical_size(&self) -> (f64, f64) {
+		self.window.get_inner_size().unwrap_or(glutin::dpi::LogicalSize::new(0.0, 0.0)).into()
+	}
 }
 
 /// representa uma chave que o jogo reconhece depois de um mapeamento de teclado
@@ -204,5 +215,7 @@ pub enum Event {
     keyDown(Key),
 
     /// chave que o jogo reconhece para ser lançado para baixo
-    keyUp(Key)
+    keyUp(Key),
+
+	UiEvent(conrod_core::event::Input)
 }
