@@ -191,6 +191,38 @@ impl Renderer {
         )
     }
 
+	/// cria uma nova textura dinâmica com dimensões específicas
+	pub fn create_dynamic_texture<P: Pipeline>(
+		&mut self,
+
+		dims: Vec2<u16>
+	) -> Result<Texture<P>, RenderError> {
+		Texture::new_dynamic(
+			&mut self.factory,
+
+			dims.x,
+			dims.y
+		)
+	}
+
+	/// atualizar a textura com o offset, tamanho e dado fornecidos
+	pub fn update_texture<P: Pipeline>(
+		&mut self,
+
+		texture: &Texture<P>,
+		offset: [u16; 2],
+		size: [u16; 2],
+		data: &[[u8; 4]]
+	) -> Result<(), RenderError> {
+		texture.update(
+			&mut self.encoder,
+
+			offset,
+			size,
+			data
+		)
+	}
+
     /// lista a renderização do modelo de skybox fornecido
     pub fn render_skybox(
         &mut self,
@@ -270,17 +302,18 @@ impl Renderer {
         &mut self,
 
         model: &Model<ui::UiPipeline>,
-        locals: &Consts<ui::Locals>,
         tex: &Texture<ui::UiPipeline>
     ) {
+		let (width, height) = self.get_resolution().map(|e| e).into_tuple();
+			
         self.encoder.draw(
             &model.slice,
             &self.ui_pipeline_pso,
 
             &ui::pipe::Data {
                 vbuf: model.vbuf.clone(),
-                locals: locals.buf.clone(),
 
+				scissor: gfx::Rect { x: 0, y: 0, w: width, h: height },
                 tex: (tex.srv.clone(), tex.sampler.clone()),
 
                 tgt_color: self.tgt_color_view.clone(),
