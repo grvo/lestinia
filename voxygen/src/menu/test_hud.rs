@@ -43,7 +43,7 @@ widget_ids!{
 	}
 }
 
-// todo: fazer widget_ids! macro e mimic para ids de imagens ou encontrar outra solução para simplificar adição de novas imagens para o código
+// todo: fazer widget_ids! macro e mimic para ids de imagens ou encontrar outra solução para simplificar adição de novas imagens
 struct Imgs {
 	menu_button: ImgId,
 
