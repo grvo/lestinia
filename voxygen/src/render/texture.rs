@@ -91,11 +91,8 @@ impl<P: Pipeline> Texture<P> {
             tex,
             srv,
 			
-            // todo: é esse o sampler correto?
             sampler: factory.create_sampler(gfx::texture::SamplerInfo::new(
-                gfx::texture::FilterMethod::Scale,
-				
-                // gfx::texture::FilterMethod::Bilinear
+                gfx::texture::FilterMethod::Bilinear,
                 gfx::texture::WrapMode::Clamp
             )),
 			
@@ -103,7 +100,7 @@ impl<P: Pipeline> Texture<P> {
         })
 	}
 
-	// atualizar textura com o dado fornecido (utilizado para atualizar a textura glyphcache)
+	// atualizar textura com o dado fornecido (utilizado para atualizar a textura da cache de glifo)
 	pub fn update(
 		&self,
 
