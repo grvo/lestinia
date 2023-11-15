@@ -34,7 +34,7 @@ use crate::{
     render::Renderer,
     scene::Scene,
 
-	ui::test::TestUi
+	menu::test_hud::TestHud
 };
 
 const FPS: u64 = 60;
@@ -45,7 +45,7 @@ pub struct SessionState {
     key_state: KeyState,
 
 	// todo: remover isso
-	test_ui: TestUi
+	test_hud: TestHud
 }
 
 /// representa uma atividade de sessão de jogo
@@ -59,7 +59,7 @@ impl SessionState {
             scene: Scene::new(window.renderer_mut(), &client),
             client,
             key_state: KeyState::new(),
-			test_ui: TestUi::new(window)
+			test_hud: TestHud::new(window)
         })
     }
 }
@@ -102,7 +102,7 @@ impl SessionState {
         self.scene.render_to(renderer);
 
 		// desenhar a ui para a tela
-		self.test_ui.render(renderer);
+		self.test_hud.render(renderer);
 
         // finalizar o frame
         renderer.flush();
@@ -155,7 +155,7 @@ impl PlayState for SessionState {
 
 					// passar eventos para ui
 					Event::UiEvent(input) => {
-						self.test_ui.handle_event(input);
+						self.test_hud.handle_event(input);
 					}
 
                     // passar todos os outros eventos para a cena
@@ -175,7 +175,7 @@ impl PlayState for SessionState {
             self.scene.maintain(global_state.window.renderer_mut(), &self.client);
 
 			// mantém a ui
-			self.test_ui.maintain(global_state.window.renderer_mut());
+			self.test_hud.maintain(global_state.window.renderer_mut());
 
             // renderiza a sessão
             self.render(global_state.window.renderer_mut());
