@@ -48,10 +48,10 @@ pub use self::{
         },
 
         ui::{
-            create_quad_mesh as create_ui_quad_mesh,
+            push_quad_to_mesh as push_ui_quad_to_mesh,
 
-            UiPipeline,
-            Locals as UiLocals
+			Mode as UiMode,
+            UiPipeline
         }
     }
 };
@@ -67,6 +67,7 @@ use gfx;
 pub enum RenderError {
     PipelineError(gfx::PipelineStateError<String>),
     UpdateError(gfx::UpdateError<usize>),
+	TexUpdateError(gfx::UpdateError<[u16; 3]>),
     CombinedError(gfx::CombinedError)
 }
 
