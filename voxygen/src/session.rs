@@ -136,6 +136,9 @@ impl PlayState for SessionState {
                     // quando 'q' for pressionado, deixar sessão
                     Event::Char('q') => return PlayStateResult::Pop,
 
+					// quando 'm' for pressionado, abrir/fechar o menu de teste
+                    Event::Char('m') => self.test_hud.toggle_menu(),
+
                     // manter captura de cursor
                     Event::KeyDown(Key::ToggleCursor) => {
                         global_state.window.grab_cursor(!global_state.window.is_cursor_grabbed());
