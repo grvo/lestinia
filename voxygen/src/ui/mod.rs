@@ -1,6 +1,3 @@
-pub mod title;
-pub mod test;
-
 // todo: armazenar todo o render da ui
 
 // biblioteca
