@@ -47,7 +47,7 @@ void main() {
 	gl_Position =
 		proj_mat *
 		view_mat *
-        model_mat *
+		model_mat *
 
 		bones[v_bone_idx].bone_mat *
 		vec4(v_pos, 1);
