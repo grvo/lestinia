@@ -13,6 +13,11 @@ impl<P: Pipeline> Mesh<P> {
         Self { verts: vec![] }
     }
 
+	/// limpar vértices, permitir memória alocadas no vec sobreposto
+	pub fn clear(&mut self) {
+		self.verts.clear();
+	}
+
     /// obter fatia referenciando os vértices desta malha
     pub fn vertices(&self) -> &[P::Vertex] {
         &self.verts
