@@ -1,6 +1,5 @@
 // biblioteca
 use vek::*;
-use image;
 
 // caixote
 use crate::{
