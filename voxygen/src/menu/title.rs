@@ -13,11 +13,12 @@ use crate::{
 		Event,
 		Window
 	},
-
-	session::SessionState,
-
-	ui::title::TitleUi
+	
+	session::SessionState
 };
+
+// local
+use super::title_ui::TitleUi;
 
 pub struct TitleState {
     title_ui: TitleUi
