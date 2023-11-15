@@ -1,23 +1,23 @@
 #version 330 core
 
-in vec3 v_pos;
-in vec3 v_uv;
+in vec2 v_pos;
+in vec2 v_uv;
 
-layout (std140)
-uniform u_locals {
-	vec4 bounds;
-};
+in vec4 v_color;
 
-uniform sampler2D u_tex;
+in uint v_mode;
 
-out vec3 f_pos;
+uniform sampler2D u_text;
+
 out vec2 f_uv;
+flat out uint f_mode;
+out vec4 f_color;
 
 void main() {
 	f_uv = v_uv;
-	
-	f_pos = vec3(vec2(bounds.x, bounds.y) + v_pos.xy * vec2(bounds.z, bounds.w), 0);
-	f_pos.xy = vec2(f_pos.x * 2.0 - 1.0, f_pos.y * -2.0 + 1.0);
+	f_color = v_color;
 
-	gl_Position = vec4(f_pos, 1);
+	gl_Position = vec4(v_pos, 0.0, 1.0);
+
+	f_mode = v_mode;
 }
