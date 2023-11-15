@@ -1,7 +1,6 @@
 // biblioteca
 use conrod_core::{
     Positionable,
-    Sizeable,
 	
     Widget,
     event::Input,
@@ -9,7 +8,6 @@ use conrod_core::{
 	
     widget::{
         Image as ImageWidget,
-        Canvas as CanvasWidget,
         Id as WidgId
     }
 };
@@ -45,16 +43,10 @@ impl TitleUi {
     }
 
 	fn ui_layout(&mut self) {
-        // atualizar caso o evento já tenha ocorrido
-        if !self.ui.global_input().events().next().is_some() {
-            return;
-        }
-		
         let mut ui_cell = self.ui.set_widgets();
 		
         ImageWidget::new(self.title_img_id)
             .top_left()
-            .w_h(500.0, 500.0)
             .set(self.widget_id, &mut ui_cell);
     }
 
