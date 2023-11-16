@@ -1,4 +1,3 @@
-// biblioteca
 use gfx::{
     self,
 
@@ -12,7 +11,8 @@ use gfx::{
     gfx_pipeline_inner
 };
 
-// local
+use vek::*;
+
 use super::super::{
     Pipeline,
 
@@ -77,8 +77,7 @@ impl Mode {
 	}
 }
 
-// todo: não utilizar [f32; 4] para retângulos como formatos
-pub fn push_quad_to_mesh(mesh: &mut Mesh<UiPipeline>, rect: [f32; 4], uv_rect: [f32; 4], color: [f32; 4], mode: Mode) {
+pub fn push_quad_to_mesh(mesh: &mut Mesh<UiPipeline>, rect: Aabr<f32>, uv_rect: Aabr<f32>, color: [f32; 4], mode: Mode) {
 	let mode_val = mode.value();
 
 	let v = |pos, uv| {
@@ -91,13 +90,18 @@ pub fn push_quad_to_mesh(mesh: &mut Mesh<UiPipeline>, rect: [f32; 4], uv_rect: [
 		}
 	};
 
-	let (l, t, r, b) = (rect[0], rect[1], rect[2], rect[3]);
-	let (uv_l, uv_t, uv_r, uv_b) = (uv_rect[0], uv_rect[1], uv_rect[2], uv_rect[3]);
+	let aabr_to_lbrt = |aabr: Aabr<f32>| (
+		aabr.min.x, aabr.min.y,
+		aabr.max.x, aabr.max.y
+	);
+
+	let (l, b, r, t) = aabr_to_lbrt(rect);
+	let (uv_l, uv_b, uv_r, uv_t) = aabr_to_lbrt(uv_rect);
 
 	mesh.push_quad(Quad::new(
 		v([r, t], [uv_r, uv_t]),
-        v([l, t], [uv_l, uv_t]),
-        v([l, b], [uv_l, uv_b]),
-        v([r, b], [uv_r, uv_b])
+		v([l, t], [uv_l, uv_t]),
+		v([l, b], [uv_l, uv_b]),
+		v([r, b], [uv_r, uv_b])
 	));
 }
