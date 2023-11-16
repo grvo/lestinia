@@ -1,4 +1,3 @@
-// biblioteca
 use vek::*;
 
 use gfx::{
@@ -12,7 +11,6 @@ use gfx::{
 
 use image;
 
-// local
 use super::{
     consts::Consts,
     mesh::Mesh,
@@ -302,9 +300,11 @@ impl Renderer {
         &mut self,
 
         model: &Model<ui::UiPipeline>,
-        tex: &Texture<ui::UiPipeline>
+        tex: &Texture<ui::UiPipeline>,
+
+		scissor: Aabr<u16>
     ) {
-		let (width, height) = self.get_resolution().map(|e| e).into_tuple();
+		let Aabr { min, max } = scissor;
 			
         self.encoder.draw(
             &model.slice,
@@ -313,7 +313,7 @@ impl Renderer {
             &ui::pipe::Data {
                 vbuf: model.vbuf.clone(),
 
-				scissor: gfx::Rect { x: 0, y: 0, w: width, h: height },
+				scissor: gfx::Rect { x: min.y, y: min.y, w: max.x - min.x, h: max.y - min.y },
                 tex: (tex.srv.clone(), tex.sampler.clone()),
 
                 tgt_color: self.tgt_color_view.clone(),
